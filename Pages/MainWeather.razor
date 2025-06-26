@@ -1,0 +1,362 @@
+﻿    @page "/weather"
+    @using MudBlazor
+    @layout DashboardLayout
+    @using MFModel.Models
+    @using HFModel.Models
+    @using UDService.Services
+    @inject Userdata UDService
+    @using RSService.Services
+    @inject RegisterService RSService
+    @using System
+    @using HSService.Services
+    @inject HourService HSService
+    @using WSService.Services
+    @inject WeatherService WSService
+    @using HService.Services
+    @inject HistoryService HService
+
+
+ @if(forecast != null && forecast.Count>0)   
+ {
+    <MudContainer MaxWidth="MaxWidth.Large" Class="p-2 p-sm-3 p-md-6">
+
+        <!-- Top Search Row -->
+        <MudGrid Gutter="true" Class="mb-6 mt-2">
+            <MudItem xs="9" sm="10" md="6">
+                <MudTextField Label="Search city..." @bind-Value="cityname" Variant="Variant.Filled" FullWidth="true" Style="background-color:white;border-radius:20px" />
+            </MudItem>
+            <MudItem xs="3" sm="2" md="2">
+                <MudButton Variant="Variant.Filled" @onclick="getweather" Class="btn-1" FullWidth="true">SHOW</MudButton>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.h3" Class="title-text text-center mt-0">WEATHER BLOOM</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudGrid Gutter="true">
+            <!-- Left Section -->
+            <MudItem xs="12" md="8">
+                <MudContainer Class="mit">
+                    <MudGrid Gutter="true">
+                        <MudItem Class="tgb-1" md="6">
+                            <MudText Typo="Typo.h4" Class="title-text text-center"> @forecast[0].CityName </MudText>
+                            <MudText Typo="Typo.h1" Class="title-text text-center"> @forecast[0].Temp° </MudText>
+                        </MudItem>
+                        <MudItem Class="tgb-2" md="6">
+                            <img src="@GetWeatherIcon(forecast[0].Main)" alt="weather" style="width:150px;height:150px;margin-top:10px;" />
+                        </MudItem>
+                    </MudGrid>
+                </MudContainer>
+
+                <!-- Current Conditions -->
+                <MudItem md="12" Class="middle-grid">
+                    <MudPaper Class="mgc-1" Elevation="3">
+                        <MudGrid Gutter="true">
+                            <MudItem xs="12" sm="3">
+                                <MudText Typo="Typo.h5" Align="Align.Center">🌡@forecast[0].FeelsLike°</MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudText Typo="Typo.h5" Align="Align.Center">@forecast[0].Main.ToUpper()</MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudText Typo="Typo.h5" Align="Align.Center">💧@forecast[0].Humidity%</MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="2" >
+                                <MudCheckBox T="bool" @bind-Value="isChecked" @onclick="() => ToggleFavourite(forecast[0].CityName, isChecked)"
+                            CheckedIcon="@Icons.Material.Filled.Favorite" UncheckedIcon="@Icons.Material.Filled.FavoriteBorder"
+                            Color="Color.Error">
+                        </MudCheckBox>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Feature Cards -->
+                <MudGrid Gutter="true">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Elevation="2" Class="mit-1 p-4 text-center">
+                            <img src="/Images/gauge.png" alt="wind" style="width:70px;height:70px" />
+                            <MudText Typo="Typo.h6" Class="mt-4">@($"{forecast[0].Pressure} hPa")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Elevation="2" Class="mit-1 p-4 text-center">
+                            <img src="/Images/windy.png" alt="wind" style="width:70px;height:70px" />
+                            <MudText Typo="Typo.h6">@($"{forecast[0].WindSpeed} m/s")</MudText>
+                            <MudText Typo="Typo.h6">@wind</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="12" md="4">
+                        <MudPaper Elevation="2" Class="mit-1 p-4 text-center">
+                            <img src="/Images/location.png" alt="loc" style="width:70px;height:70px" />
+                            <MudText Typo="Typo.h6">@forecast[0].Country</MudText>
+                            <MudText Typo="Typo.h6">( @forecast[0].Lat.ToString("0.00") ,@forecast[0].Lon.ToString("0.00") )</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+
+            <!-- Right Section -->
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="3" Class="sb-1 p-6">
+                    <MudText Typo="Typo.h6" Class="pl-2">6-Days Forecast</MudText>
+                    <div style="overflow-x:auto;" >
+                        <MudTable Items="@forecast" Elevation="0" Dense="true" Hover="true" HideToolbar="true">
+                            <RowTemplate>
+                                <MudTd>@context.Date.ToString("ddd")</MudTd>
+                                <MudTd><img src="@GetWeatherIcon(context.Main)" alt="icon" width="35" /></MudTd>
+                                <MudTd>@context.Main</MudTd>
+                                <MudTd>@context.Temp/@context.FeelsLike</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </div>
+                    @* <MudText Typo="Typo.h5" Align="Align.Center">Current Day : @DateTime.Now.ToString("dd-MMMM-yy")</MudText> *@
+                    <MudContainer class="daily-message"></MudContainer>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+    @if (HourlyList != null)
+    {
+        <MudContainer Class="bottom-container">
+            <MudPaper Class="bottom-paper mt-3" Elevation="3">
+                <MudText Typo="Typo.h6" Style="margin:10px;">Hourly Weather Forecast</MudText>
+                <MudGrid Gutter="true" Class="hour-scroll" Style="overflow-x:auto; flex-wrap:nowrap;">
+                    @foreach (var hour in HourlyList.Take(12))
+                    {
+                        <MudItem xs="4" sm="2" md="1" Style="min-width: 80px;">
+                            <MudContainer Class="p-2 text-center">
+                                <MudText Typo="Typo.subtitle2">@hour.Time.ToString("hh tt")</MudText>
+                                <img src="@GetWeatherDescription(hour.WeatherCode)" alt="weather" style="width:50px;height:50px;" />
+                                <MudText Typo="Typo.h6">@hour.Temperature.ToString("0")°</MudText>
+                            </MudContainer>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudContainer>
+    }
+    else
+    {
+        
+        <MudText>Loading</MudText>
+    }
+    }
+else
+{
+    <MudContainer Class="container-1 object-center">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+    </MudContainer>
+}
+
+    
+    
+
+@code {
+    private string cityname = "chennai";
+    private string wind = "North";
+    List<HourlyForecast> HourlyList = new();
+    private List<MainForecase> forecast = new List<MainForecase>();
+    private bool isChecked = false;
+
+    private async Task Checked(string city)
+    {
+        bool result = await WSService.GetBoolAsync(city);
+        if(result)
+        {
+            isChecked = false;
+        }
+        else
+        {
+            isChecked = true;            
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        forecast = await RSService.GetForecastAsync("mumbai", 6);
+        var allData = await HSService.GetHourlyForecastAsync(forecast[0].Lat, forecast[0].Lon);
+        var now = DateTime.Now;
+        HourlyList = allData.Where(h => h.Time >= now).Take(12).ToList();
+        Console.WriteLine(HourlyList[1].WeatherCode);
+    }
+
+    private async Task getweather()
+    {
+
+        try
+        {
+            forecast = await RSService.GetForecastAsync(cityname, 6);
+            bool result = await HService.PostHistoryAsync(forecast[0].CityName, forecast[0].Temp, forecast[0].Humidity, forecast[0].WindSpeed, forecast[0].Description);
+            if(result)
+            {
+                Console.WriteLine("history inserted");
+            }
+            else
+            {
+                Console.WriteLine("history not inserted");
+            }
+            if (forecast != null)
+                {
+                    wind = winddir(forecast[0].WindDeg);
+                    var allData = await HSService.GetHourlyForecastAsync(forecast[0].Lat, forecast[0].Lon);
+                    var now = DateTime.Now;
+                    HourlyList = allData.Where(h => h.Time >= now).Take(12).ToList();
+                }
+                await Checked(forecast[0].CityName);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error: {e.Message}");
+            }
+        }
+        private async Task ToggleFavourite(string city, bool check)
+        {
+            await WSService.AddFavAsync(city);
+        }
+        private string winddir(float windDeg)
+        {
+            windDeg %= 360;
+            if (windDeg < 0) windDeg += 360;
+            if (windDeg >= 348.75 || windDeg < 11.25) return "North";
+            if (windDeg < 33.75) return "North-NorthEast";
+            if (windDeg < 56.25) return "North-East";
+            if (windDeg < 78.75) return "East-NorthEast";
+            if (windDeg < 101.25) return "East";
+            if (windDeg < 123.75) return "East-SouthEast";
+            if (windDeg < 146.25) return "South-East";
+            if (windDeg < 168.75) return "South-SouthEast";
+            if (windDeg < 191.25) return "South";
+            if (windDeg < 213.75) return "South-SouthWest";
+            if (windDeg < 236.25) return "South-West";
+            if (windDeg < 258.75) return "West-SouthWest";
+            if (windDeg < 281.25) return "West";
+            if (windDeg < 303.75) return "West-NorthWest";
+            if (windDeg < 326.25) return "North-West";
+            if (windDeg < 348.75) return "North-NorthWest";
+            return "North";
+        }
+
+        private string GetWeatherIcon(string? condition) => condition switch
+        {
+            "Clear" => "Images/contrast.png",
+            "Clouds" => "Images/cloudy.png",
+            "Rain" => "Images/thunder.png",
+            "Drizzle" => "Images/drizzle.png",
+            "Thunderstorm" => "Images/thunder.png",
+            "Snow" => "Images/snow.png",
+            "Mist" => "Images/mist.png",
+            "Fog" => "Images/fog.png",
+            "Smoke" => "Images/smoke.png",
+            "Haze" => "Images/haze.png",
+            "Dust" => "Images/dust.png",
+            "Sand" => "Images/sand.png",
+            "Ash" => "Images/ash.png",
+            "Squall" => "Images/squall.png",
+            "Tornado" => "Images/tornado.png",
+            _ => "Images/sunnybg.png"
+        };
+
+        private string GetWeatherDescription(int code) => code switch
+        {
+            0 => "Images/sun.png",
+            1 => "Images/sun.png",
+            2 => "Images/cloudy.png",
+            3 => "Images/cloudy.png",
+            80 => "Images/thunder.png",
+            63 => "Images/thunder.png",
+            81 => "Images/thunder.png",
+            95 => "Images/thunder.png",
+            _ => "N/A"
+        };
+    }
+    <style>
+        .mit-1{
+            height:200px;
+            border-radius:16px;
+            padding:10px;
+        }
+        .mit{
+            margin-top:0px;
+            height:220;
+            border-radius: 16px;
+            padding: 10px;
+        }
+        .sb-1{
+            height:483px;
+            border-radius:16px;
+            padding: 10px;
+        }
+        .btn-1{
+            margin-top:0px;
+            height:55px;
+            border-radius:16px;
+            background-color: #2D7175;
+            color:white;
+        }
+        .btn-1:hover{
+            background-color:#1A4A4D;
+        }
+        .tgb-1{
+            height:200px;
+        }
+        .tgb-2 {
+            height: 200px;
+            display: flex;
+            justify-content: center;
+        }
+        .mgc-1{
+            border-radius:16px;
+            height:auto;
+            margin-bottom:20px;
+            padding:10px;
+        }
+        .mg1{
+            border-radius:10px;
+     
+        }
+        body{
+            background-color: #D1E7E8;
+        }
+        .title-text{
+            color: #1A4A4D;
+        }
+        .mpl{
+            height:200px;
+            border-radius:16px;
+            padding:10px;
+        }
+        .bottom-paper{
+            border-radius:16px;
+            height:auto;
+            padding:10px;
+
+        }
+         screen and (max-width: 768px) {
+        .tgb-1, .tgb-2, .mgc-1, .sb-1 {
+            padding: 10px !important;
+            text-align: center;
+            height: auto !important;
+        }
+    }
+
+    body {
+        background-color: #D1E7E8;
+    }
+    .bottom-container{
+        padding-left:16px;
+        padding-right:16px;
+        padding-bottom:20px;
+    }
+    /* .daily-message{
+        background-color:aquamarine;
+        height:100px;
+    } */
+    .container-1{
+        height:600px;
+        display:flex;
+        flex-direction:row;
+        justify-content:center;
+        align-items:center; 
+    }
+    </style>

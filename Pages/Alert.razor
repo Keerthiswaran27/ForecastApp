@@ -1,0 +1,308 @@
+﻿@page "/alerts"
+@layout DashboardLayout
+
+@using ESService.Services
+@using WSService.Services
+@using ENService.Services
+@using PDModel.Models
+@using PSService.Services
+@inject ProfileService PSService
+@inject EmailService ESService
+@inject WeatherService WSService
+@inject EmailNotificationService ENService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="container-1">
+    @if (condition)
+    {
+        @* <MudText Typo="Typo.h5" Class="txt-1 mb-4">Set Alert Conditions & Cities</MudText> *@
+        <MudGrid Gutter="true">
+            <MudItem xs="12" sm="12" md="6">
+                <MudContainer Class="container-2">
+                    <MudText Typo="Typo.h5" Class="txt-1">Set Email & Temp</MudText>
+                    <MudContainer Class="container-4">
+
+                        <MudTextField @bind-Value="email"
+                                      Label="Enter your email"
+                                      Variant="Variant.Filled"
+                                      Class="email-inputbox mb-4"
+                                      Placeholder="Enter Alert Email"/>
+                        <MudTextField T="float"
+                                      @bind-Value="temperature"
+                                      Label="Enter the temperature"
+                                      Variant="Variant.Filled"
+                                      Class="email-inputbox mb-4" 
+                                      Placeholder="Enter Temp Threshold"/>
+                        <MudTextField T="float"
+                                      @bind-Value="humidity"
+                                      Label="Enter the humidity"
+                                      Variant="Variant.Filled"
+                                      Class="email-inputbox mb-4" 
+                                      Placeholder="Enter Humidity Threshold"/>
+                    </MudContainer>
+                </MudContainer>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="6">
+                <MudContainer Class="container-3">
+                    <MudText Typo="Typo.h5" Class="txt-1">Select cities</MudText>
+                    @if (citySelections != null && citySelections.Count > 0)
+                    {
+
+                        @foreach (var item in citySelections)
+                        {
+                            <MudCheckBox T="bool"
+                                         Label="@item.CityName"
+                                         Checked="@AlertCity(item.CityName)"
+                                         @onclick="() => AddCity(item.CityName, item.IsSelected)"
+                                         CheckedIcon="@Icons.Material.Filled.CheckCircle"
+                                         UncheckedIcon="@Icons.Material.Filled.AddCircleOutline"
+                                         Class="box-icon" />
+                        }
+                        <MudButton Variant="Variant.Filled"
+                                   Class="btn-1 mt-4 ml-3"
+                                   OnClick="ConfirmSelection">
+                            SET Alert
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudContainer Class="not-found">
+                            <img src="/Images/notfound.png" alt="city not found" width="250px" height="250px" class="ml-3" />
+                        </MudContainer>
+                    }
+                </MudContainer>
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <MudContainer Class="container-5">
+            <MudGrid Gutter="true">
+                <MudItem xs="12" sm="12" md="12">
+                    <MudContainer>
+                        <MudText Typo="Typo.h5" Class="txt-1">Thank you for setting the alert</MudText>
+                        <MudButton @onclick="goback" Variant="Variant.Filled" Class="btn-2">Back</MudButton>
+                    </MudContainer>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+    }
+
+
+</MudContainer>
+
+@code {
+    private string email = string.Empty;
+    private float temperature;
+    private bool condition = true;
+    private float humidity ;
+    public class CitySelection
+    {
+        public string? CityName { get; set; }
+        public bool IsSelected = false;
+    }
+    private ProfileDetails profile = new();
+    private List<string> place = new();
+    private List<CitySelection> citySelections = new();
+    private void AddCity(string city, bool check)
+    {
+        if (!check)
+        {
+            if(!place.Contains(city))
+            {
+                place.Add(city);
+                foreach (var c in citySelections)
+                {
+                    if(c.CityName == city)
+                    {
+                        if(c.IsSelected == false)
+                        {
+                            c.IsSelected = true;
+                        }
+                    }
+                }
+            }
+
+        }
+        else
+        {
+            if(place.Contains(city))
+            {
+                place.Remove(city); 
+                foreach (var c in citySelections)
+                {
+                    if (c.CityName == city)
+                    {
+                        if (c.IsSelected == true)
+                        {
+                            c.IsSelected = false;
+                        }
+                    }
+                }
+            }
+        }
+        foreach(var a in place)
+        {
+            Console.WriteLine(a);
+        }
+        foreach (var c in citySelections)
+        {
+            Console.WriteLine($" {c.CityName} {c.IsSelected}");
+        }
+
+    }
+    private bool AlertCity(string city)
+    {
+        var cities1 = profile.Cities;
+        return cities1.Contains(city);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            profile = await PSService.GetAlertDetailsAsync();
+            email = profile.Email;
+            temperature = profile.Temp;
+            humidity = profile.Humidity;
+            var favCities = await WSService.GetFavouritesAsync(); // returns List<string>
+            foreach (var c in favCities)
+            {
+                Console.WriteLine(c);
+            }
+            citySelections = favCities.Select(city => new CitySelection
+            {
+                CityName = city,
+                IsSelected = false
+            }).ToList();
+
+            Console.WriteLine("Fetched cities: " + string.Join(", ", favCities));
+            foreach (var c in citySelections)
+            {
+                Console.WriteLine($"{c.CityName} and {c.IsSelected}");
+            }
+            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error fetching cities: " + ex.Message);
+        }
+    }
+    private void goback()
+    {
+        condition = true;
+    }
+    private async Task ConfirmSelection()
+    {
+        bool result = await WSService.UpdateAlertAsync(email, temperature, humidity, place);
+        if (result)
+        {
+            Console.WriteLine("successful alert update from alert page");
+            condition = false;
+            await ENService.SendWeatherAlertAsync(email,temperature,humidity,place);
+        }
+        else
+        {
+            Console.WriteLine("Failed to Update the alert from alert page");
+        }
+
+    }
+}
+<style>
+    .email-inputbox {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 16px;
+    }
+
+    .box-icon svg {
+        color: #1A4A4D;
+    }
+
+    .box-icon {
+        color: #1A4A4D;
+    }
+
+    body {
+        background-color: #D1E7E8;
+    }
+
+    .mud-input.mud-input-filled {
+        background-color: aliceblue;
+        border-radius: 20px;
+    }
+
+    }
+
+    .mud-input.mud-input-filled :hover {
+        background-color: azure;
+        border-radius: 20px;
+    }
+
+    .container-1 {
+        background-color: rgba(142, 185, 188,0.9);
+        padding: 30px;
+        border-radius: 20px;
+        margin-top: 50px;
+    }
+
+    .container-2 {
+        background-color: #BADBDD;
+        display: flex;
+        flex-direction: column;
+        justify-content: start; /* vertical center */
+        align-items: start;
+        padding-top: 20px;
+        height: 100%;
+        border-radius: 20px;
+    }
+
+    .container-3 {
+        background-color: #BADBDD;
+        min-height: 300px;
+        height: auto;
+        border-radius: 20px;
+        padding: 20px;
+    }
+
+    .container-4 {
+        padding-top: 20px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        flex-direction: column;
+        justify-content: start; /* vertical center */
+        align-items: start;
+    }
+
+    .btn-1 {
+        border-radius: 20px;
+        background-color: #2C6669;
+        color: aliceblue;
+    }
+
+        .btn-1:hover {
+            background-color: #1A4A4D;
+        }
+
+    .txt-1 {
+        color: #1A4A4D;
+    }
+
+    .container-5 {
+        height: auto;
+    }
+
+    .btn-2 {
+        margin-top: 10px;
+        background-color: #1A4A4D;
+        color: aliceblue
+    }
+    .not-found{
+        display: flex;
+        justify-content: center; /* horizontal center */
+        align-items: center;
+    }
+</style>

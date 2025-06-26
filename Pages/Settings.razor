@@ -1,0 +1,26 @@
+﻿@page "/settings"
+@layout DashboardLayout
+@using ESService.Services
+@inject EmailService ESService
+@inject IJSRuntime JS
+@using ENService.Services
+@using UDService.Services
+@inject Userdata UDService
+@inject EmailNotificationService ENService 
+
+<PageTitle>Settings</PageTitle>
+
+
+
+<MudTextField @bind-Value="email" Label="Recipient Email" />
+<MudButton OnClick="SendEmail">Send Weather Email</MudButton>
+<MudText>@UDService.Theme</MudText>
+
+@code {
+    private string email = "";
+
+    private async Task SendEmail()
+    {
+        await Task.Delay(200);
+    }
+}

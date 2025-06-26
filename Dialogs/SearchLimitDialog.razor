@@ -1,0 +1,28 @@
+﻿@using MudBlazor
+<MudDialog Class="glass-dialog">
+    <DialogContent>
+        <MudText Typo="Typo.h6">Limit Exceeded</MudText>
+        <MudText Typo="Typo.body2">Search limit has exceeded. Login to continue.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Login">Login</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IDialogReference DialogReference { get; set; } = default!;
+    [Inject] NavigationManager NavigationManager { get; set; } = default!;
+
+    void Login()
+    {
+        DialogReference?.Close(DialogResult.Ok(true));
+        NavigationManager?.NavigateTo("/login");
+    }
+
+    void Cancel()
+    {
+        DialogReference?.Close(DialogResult.Cancel());
+        NavigationManager?.NavigateTo("/");
+    }
+}

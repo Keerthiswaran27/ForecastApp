@@ -1,0 +1,178 @@
+﻿ @* @page "/sample"
+@layout HomeLayout  
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<PageTitle>Weather App - Home</PageTitle>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .weather-container {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+
+    .weather-card {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+        padding: 1.5rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .app-title {
+        color: #ffffff;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .forecast-card {
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .forecast-card:hover {
+        transform: scale(1.05);
+    }
+
+</style>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-8" Style="width:75%;">
+
+    <!-- App Title -->
+    <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-6 app-title font-weight-bold">
+        🌤️ Weather Forecast App
+    </MudText>
+
+    <!-- Search Bar -->
+    <MudPaper Class="weather-container d-flex flex-column align-center justify-center mb-6" Elevation="6">
+        <MudTextField  @bind-Value="CityName" Placeholder="Enter city name" Adornment="Adornment.Start" Class="mud-width-full mb-4" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="px-6" OnClick="SearchCity">
+            Search
+        </MudButton>
+    </MudPaper>
+<br>
+    <!-- If weather is available -->
+    @if (WeatherLoaded)
+    {
+        <MudGrid GutterSize="16px" Class="weather-container">
+
+            <!-- Main Weather Card -->
+            <MudItem xs="12">
+                <MudCard Class="weather-card">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2">
+                            @Weather.CityName
+                        </MudText>
+
+                        <MudText Typo="Typo.h2" Align="Align.Center" Class="mb-1">
+                            @($"{Weather.Temperature}°C")
+                        </MudText>
+
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-3">
+                            @Weather.Description
+                        </MudText>
+
+                        <MudDivider Class="my-2" />
+
+                        <MudGrid guttersize="16px" Justify="Justify.Center">
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.subtitle2">Humidity</MudText>
+                                <MudText Typo="Typo.body1">@($"{Weather.Humidity}%")</MudText>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.subtitle2">Wind Speed</MudText>
+                                <MudText Typo="Typo.body1">@($"{Weather.WindSpeed} km/h")</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Forecast Cards -->
+            @foreach (var forecast in Forecast.Take(3))
+            {
+                <MudItem xs="12" sm="4">
+                    <MudCard Class="weather-card forecast-card">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">
+                                @forecast.Day
+                            </MudText>
+
+                            <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-1">
+                                @($"{forecast.Temperature}°C")
+                            </MudText>
+
+                            <MudText Typo="Typo.subtitle2" Align="Align.Center">
+                                @forecast.Description
+                            </MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
+</MudContainer>
+
+@code {
+    private string? CityName;
+    private bool WeatherLoaded = false;
+
+    // Weather model
+    private WeatherData Weather = new();
+    private List<ForecastData> Forecast = new();
+
+    private void SearchCity()
+    {
+        if (string.IsNullOrWhiteSpace(CityName))
+        {
+            Snackbar.Add("Please enter a city name.", Severity.Warning);
+            return;
+        }
+
+        // For demo, dummy data — replace with API call.
+        Weather = new WeatherData
+        {
+            CityName = CityName,
+            Temperature = 28,
+            Description = "Sunny",
+            Humidity = 65,
+            WindSpeed = 10
+        };
+
+        Forecast = new List<ForecastData>
+        {
+            new ForecastData { Day = "Today", Temperature = 28, Description = "Sunny" },
+            new ForecastData { Day = "Tomorrow", Temperature = 30, Description = "Partly Cloudy" },
+            new ForecastData { Day = "Day After", Temperature = 27, Description = "Rainy" }
+        };
+
+        WeatherLoaded = true;
+    }
+
+    // Models
+    public class WeatherData
+    {
+        public string? CityName { get; set; }
+        public int Temperature { get; set; }
+        public string? Description { get; set; }
+        public int Humidity { get; set; }
+        public int WindSpeed { get; set; }
+    }
+
+    public class ForecastData
+    {
+        public string? Day { get; set; }
+        public int Temperature { get; set; }
+        public string? Description { get; set; }
+    }
+} *@ 

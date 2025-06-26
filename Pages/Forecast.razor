@@ -1,0 +1,446 @@
+﻿@page "/"
+@layout HomeLayout
+@using MudBlazor
+@using System
+@using WRModel.Models
+@using DFModel.Models
+@using URService.Services
+@inject NavigationManager NavigationManager
+@inject UnregisterService URService
+@inject IDialogService DialogService
+@using ForecastApp.Dialogs
+
+
+
+<PageTitle>Weather</PageTitle>
+
+<MudAppBar Fixed="false"  Elevation="1" Style="margin-top:auto;border-radius:0px;background-color:#1A4A4D">
+        <MudText Typo="Typo.h5" Class="ml-3" >WEATHER APP</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+</MudAppBar>
+<section style="height: 400px; background-color:#D1E7E8; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <MudText Typo="Typo.h1" Class="txt-clr text-pink  mb-2" Style="font-size: 7rem; font-weight: bold;">
+        WEATHER BLOOM
+    </MudText>
+    <MudText Typo="Typo.subtitle1" Style="max-width: 600px;">
+        Bright skies or cloudy vibes — we’ve got your forecast covered.
+    </MudText>
+    <br/>
+    <MudButton Class="btn-clear" @onclick="gotologin" Style="padding:10px">  Get started  </MudButton>
+</section>
+
+
+<body Style="background-color: #D1E7E8;">
+@if (weatherstart)
+{
+    <br/>
+
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+
+        @* <MudText Typo="Typo.h5" Align="Align.Center" Class="my-2">Welcome to Weather App</MudText> *@
+        @* <MudText Typo="Typo.h6" Align="Align.Center">Search City</MudText> *@
+        <MudTextField T="string" @bind-Value="@searchCity" Placeholder="Enter city name..." Class="mt-2" Label="City Name" Variant="Variant.Filled" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" style="background-color: aliceblue;border-radius: 16px;" />
+        <MudButton @onclick="SetCityAsync" @Disabled="@searchDisabled" FullWidth="true" Class="btn-clear" >search</MudButton>
+        
+        <MudGrid Spacing="4" Justify="Justify.Center">
+            <!-- New Full-Width Card With Input -->
+        
+
+@if (result.Count > 0)
+{
+    <!-- Today card -->
+                <!-- Top Full-Width Card -->
+            <MudItem xs="12">
+                <MudCard Class="pa-0"   Elevation="6" Style=" height: 200px;border-radius:16px;">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Align="Align.Center">@searchCity</MudText>
+                        @* <div style="display:flex;justify-content: end; padding-right: 120px;"> 
+                            <img src="Images/sunnybg.png" alt="Weather Icon" style="width: 100px;height:100px;" />
+                        </div> *@
+                        <MudGrid>
+                            <!-- First Column -->
+                            <MudItem xs="12" sm="6" Style="text-align: center;">
+                                <MudText Typo="Typo.h6"><h1>@result[0].Temp °C</h1></MudText>
+                                <MudText Typo="Typo.h6">Humidity : @result[0].Humidity</MudText>
+                                <MudText Typo="Typo.h6">WindSpeed : @result[0].WindSpeed mph</MudText>
+                                <!-- Add more content here -->
+                            </MudItem>
+
+                            <!-- Second Column -->
+                            <MudItem xs="12" sm="6" Style="text-align: center;height:100%;">
+                                <MudText Typo="Typo.h6"></MudText>
+                                <!-- Add more content here -->
+                                <img src="@GetWeatherIcon(result[0].Condition)" alt="Weather Icon" style="width: 100px;height:100px;" />
+                                <MudText Typo="Typo.h6" Align="Align.Center">@result[0].Condition</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+
+    <!-- Tomorrow card -->
+    
+            <!-- Bottom Left Card -->
+            <MudItem xs="12" sm="6">
+                <MudCard Class="pa-0" Elevation="6" Style=" height: 200px;border-radius:16px">
+                    <MudCardContent Style="text-align: center;">
+                        <MudText Typo="Typo.h6" Align="Align.Center">Tomorrow</MudText>
+                        <img src="@GetWeatherIcon(result[1].Condition)" alt="Weather Icon" style="width: 100px;height:100px;" />
+                        <MudText Typo="Typo.h6" Align="Align.Center">@result[1].Temp °C || 💧@result[1].Humidity</MudText>
+
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+
+}
+@if (result.Count > 2)
+{
+    <!-- Day after tomorrow card -->
+    <!-- Bottom Right Card -->
+            <MudItem xs="12" sm="6">
+                <MudCard Class="pa-0" Elevation="6" Style=" height: 200px;border-radius:16px">
+                    <MudCardContent Style="text-align: center;">
+                        <MudText Typo="Typo.h6" Align="Align.Center">Day After tomorrow</MudText>
+                        <img src="@GetWeatherIcon(result[2].Condition)" alt="Weather Icon" style="width: 100px;height:100px;" />
+                        <MudText Typo="Typo.h6" Align="Align.Center">@result[2].Temp °C || 💧@result[2].Humidity</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+}            
+        </MudGrid>
+        <br>
+
+    </MudContainer>
+    <br>
+    <br>
+}
+else{
+    <br>
+
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+
+        @* <MudText Typo="Typo.h5" Align="Align.Center" Class="my-2">Welcome to Weather App</MudText> *@
+        @* <MudText Typo="Typo.h6" Align="Align.Center">Search City</MudText> *@
+        <MudTextField T="string" @bind-Value="@searchCity" Placeholder="Enter city name..." Class="mt-2" Label="City Name" Variant="Variant.Filled" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" style="background-color: aliceblue;border-radius: 16px;" />
+        <MudButton @onclick="SetCityAsync" FullWidth="true" Class="btn-clear">search</MudButton>
+        <MudGrid Spacing="4" Justify="Justify.Center">
+            <!-- New Full-Width Card With Input -->
+        
+
+
+            <!-- Top Full-Width Card -->
+            <MudItem xs="12">
+                <MudCard  Class="pa-0"   Elevation="6" Style=" height: 200px;border-radius:16px">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Align="Align.Center">Bangalore</MudText>
+                        @* <div style="display:flex;justify-content: end; padding-right: 120px;"> 
+                            <img src="Images/sunnybg.png" alt="Weather Icon" style="width: 100px;height:100px;" />
+                        </div> *@
+                        <MudGrid>
+                            <!-- First Column -->
+                            <MudItem xs="12" sm="6" Style="text-align: center;">
+                                <MudText Typo="Typo.h6"><h1>28 °C</h1></MudText>
+                                <MudText Typo="Typo.h6">Humidity : 60</MudText>
+                                <MudText Typo="Typo.h6">WindSpeed : 5 mph</MudText>
+                                <!-- Add more content here -->
+                            </MudItem>
+
+                            <!-- Second Column -->
+                            <MudItem xs="12" sm="6" Style="text-align: center;height:100%;">
+                                <MudText Typo="Typo.h6"></MudText>
+                                <!-- Add more content here -->
+                                <img src="Images/contrast.png" alt="Weather Icon" class="mt-2 mb-2" style="width: 90px;height:90px;" />
+                                <MudText Typo="Typo.h6" Align="Align.Center">Sunny</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Bottom Left Card -->
+            <MudItem xs="12" sm="6">
+                <MudCard Class="pa-0" Elevation="6" Style=" height: 200px;border-radius:16px">
+                    <MudCardContent Style="text-align: center;">
+                        <MudText Typo="Typo.h6" Align="Align.Center">Tomorrow</MudText>
+                        <img src="Images/contrast.png" alt="Weather Icon" class="mt-2 mb-2" style="width: 80px;height:80px;" />
+                        <MudText Typo="Typo.h6" Align="Align.Center">32 °C || 💧56</MudText>
+
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Bottom Right Card -->
+            <MudItem xs="12" sm="6">
+                <MudCard Class="pa-0" Elevation="6" Style=" height: 200px;border-radius:16px">
+                    <MudCardContent Style="text-align: center;">
+                        <MudText Typo="Typo.h6" Align="Align.Center">Day After tomorrow</MudText>
+                        <img src="Images/contrast.png" alt="Weather Icon" class="mt-2 mb-2" style="width: 80px;height:80px;" />
+                        <MudText Typo="Typo.h6" Align="Align.Center">26 °C || 💧72</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+        </MudGrid>
+        <br>
+
+    </MudContainer>
+    <br>
+    <br>
+    <br>
+    <br>
+}
+</body>
+
+@code {
+    private string backgroundStyle = "background: linear-gradient(to bottom,rgba(255, 255, 255, 0.7) 0%,#f8bbd0 20%,#f48fb1 50%,#ec407a 100%);border-radius: 16px;";
+    private string searchCity = "";
+    private string condition = "";
+    private bool weatherstart = false;
+    private int searchCount = 1;
+    private bool searchDisabled = false;
+    void gotologin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+    private string GetWeatherIcon(string? condition)
+    {
+        return condition switch
+        {
+            "Clear" => "Images/contrast.png",
+            "Clouds" => "Images/cloudy.png",
+            "Rain" => "Images/thunder.png",
+            "Drizzle" => "Images/drizzle.png",
+            "Thunderstorm" => "Images/thunder.png",
+            "Snow" => "Images/snow.png",
+            "Mist" => "Images/mist.png",
+            "Fog" => "Images/fog.png",
+            "Smoke" => "Images/smoke.png",
+            "Haze" => "Images/haze.png",
+            "Dust" => "Images/dust.png",
+            "Sand" => "Images/sand.png",
+            "Ash" => "Images/ash.png",
+            "Squall" => "Images/squall.png",
+            "Tornado" => "Images/tornado.png",
+            _ => "Images/sunnybg.png" // fallback image
+        };
+    }
+
+    private List<DailyForecast> result = new();
+    private async Task ShowDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, Position = DialogPosition.Center};
+        var dialog = await DialogService.ShowAsync<SimpleDialog>("Confirm Action", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Console.WriteLine("User clicked Yes");
+        }
+        else
+        {
+            Console.WriteLine("User clicked No");
+        }
+    }
+    private async Task SetCityAsync()
+    {   
+        if (searchCount > 3)
+        {
+            var options = new DialogOptions() 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true, 
+            Position = DialogPosition.Center 
+        };
+
+        await DialogService.ShowAsync<SearchLimitDialog>("", options);
+        return;
+        }
+
+        else
+        {
+            try{
+                result.Clear();
+                result = await URService.GetWeather(searchCity);
+                if(result[0].Condition is not null)
+                {
+                    condition = result[0].Condition;
+                    SetBackgroundStyle();
+                    weatherstart = true;
+                    searchCount=searchCount+1;
+                    Console.WriteLine(searchCount);
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+    }
+    private void SetBackgroundStyle()
+    {
+        backgroundStyle = condition switch
+        {
+            "Thunderstorm" => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #757575 40%, #212121 85%);",  
+            "Drizzle"      => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #B3E5FC 40%, #4FC3F7 85%);",  
+            "Rain"         => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #81D4FA 40%, #0288D1 85%);",  
+            "Snow"         => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #E1F5FE 40%, #B3E5FC 85%);",  
+            "Mist"         => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #ECEFF1 40%, #B0BEC5 85%);",  
+            "Smoke"        => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #B0BEC5 40%, #90A4AE 85%);",  
+            "Haze"         => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #CFD8DC 40%, #B0BEC5 85%);",  
+            "Dust"         => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #FFCC80 40%, #FFB74D 85%);",  
+            "Fog"          => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #CFD8DC 40%, #B0BEC5 85%);",  
+            "Sand"         => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #FFD180 40%, #FFAB40 85%);",  
+            "Ash"          => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #BCAAA4 40%, #8D6E63 85%);",  
+            "Squall"       => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #90A4AE 40%, #546E7A 85%);",  
+            "Tornado"      => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #616161 40%, #212121 85%);",  
+            "Clear"        => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #FFECB3 40%, #FF9800 85%);",  
+            "Clouds"       => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #CFD8DC 40%, #B0BEC5 85%);",  
+            _              => "background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, #E3F2FD 40%, #FFFFFF 85%);"
+        };
+    }
+
+
+    private string GetButtonClass()
+    {
+        return condition switch
+        {
+            "Thunderstorm" => "btn-thunderstorm",
+            "Drizzle" => "btn-drizzle",
+            "Rain" => "btn-rain",
+            "Snow" => "btn-snow",
+            "Mist" => "btn-mist",
+            "Smoke" => "btn-smoke",
+            "Haze" => "btn-haze",
+            "Dust" => "btn-dust",
+            "Fog" => "btn-fog",
+            "Sand" => "btn-sand",
+            "Ash" => "btn-ash",
+            "Squall" => "btn-squall",
+            "Tornado" => "btn-tornado",
+            "Clear" => "btn-clear",
+            "Clouds" => "btn-clouds",
+            _ => "btn-default"
+        };
+    }
+
+
+}
+
+<style>
+    .txt-clr{
+        color:;
+    }
+    .btn-clear{
+        background-color:#2D7175;
+        color:white;
+    }
+    .btn-clear:hover {
+    background-color: #1A4A4D; /* deeper soft orange */
+    color: white;
+    }
+    .btn-clouds {
+        background-color: #607D8B; /* deeper cool gray */
+        color: white;
+    }
+    .btn-rain {
+        background-color: #01579B; /* deeper strong blue */
+        color: white;
+    }
+    .btn-thunderstorm {
+        background-color: #212121; /* very dark gray */
+        color: white;
+    }
+    .btn-drizzle {
+        background-color: #29B6F6; /* slightly deeper blue */
+        color: black;
+    }
+    .btn-snow {
+        background-color: #81D4FA; /* slightly deeper light blue */
+        color: black;
+    }
+    .btn-mist, .btn-fog, .btn-haze {
+        background-color: #90A4AE; /* darker than original */
+        color: black;
+    }
+    .btn-smoke {
+        background-color: #546E7A; /* deeper gray-blue */
+        color: white;
+    }
+    .btn-dust, .btn-sand {
+        background-color: #F57C00; /* deeper amber */
+        color: black;
+    }
+    .btn-ash {
+        background-color: #6D4C41; /* deeper brown */
+        color: white;
+    }
+    .btn-squall {
+        background-color: #455A64; /* darker blue-gray */
+        color: white;
+    }
+    .btn-tornado {
+        background-color: #1B1B1B; /* very dark gray */
+        color: white;
+    }
+    .btn-default {
+        background-color: #c2185b; /* darker pink-red */
+        color: white;
+    }
+    .btn-default:hover {
+        background-color: #880e4f;
+    }
+
+    /* Common properties */
+    .btn-clear, .btn-clouds, .btn-rain, .btn-thunderstorm, .btn-drizzle,
+    .btn-snow, .btn-mist, .btn-smoke, .btn-haze, .btn-dust, .btn-sand,
+    .btn-ash, .btn-squall, .btn-tornado, .btn-default {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 16px;
+    }
+
+    .sunny-button{
+        background-color:#5C6BC0;
+        color: azure;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 16px;
+    }
+    .sunny-button:hover{
+        background-color: #303F9F;
+    }
+    .thunder-button{
+        background-color: oldlace;
+        color: black;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 16px;
+    }
+    .default-button{
+        background-color: palevioletred;
+        color: white;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 16px;
+    }
+    .ab{
+        width: 100%;
+        height:550px;
+        background-color: black;
+        text-align: center;
+        justify-content: center;
+        color: aliceblue;
+    }
+    .alert
+    {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 16px;
+    }
+    
+</style>

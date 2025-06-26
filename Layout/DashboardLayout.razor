@@ -1,0 +1,145 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavManager
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+
+    <!-- AppBar -->
+    <MudAppBar Elevation="2" Class="app-clr">
+    <!-- Sidebar Toggle Button (Left) -->
+    
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" 
+                   class="icon-clr"
+                   OnClick="@(() => ToggleDrawer())" />
+        <MudText Typo="Typo.h6" Class="text-clr ml-3 ">WEATHER BLOOM</MudText>
+     <MudSpacer />              
+    <!-- Centered Icons -->
+    <MudToolBar style="justify-items:end">
+            <MudIconButton Href="/weather" Icon="@Icons.Material.Filled.Home" Class="text-clr" />
+            <MudIconButton Href="/favourites" Icon="@Icons.Material.Filled.Favorite" Class="text-clr" />
+            <MudIconButton Href="/alerts" Icon="@Icons.Material.Filled.Notifications" Class="text-clr" />
+            @* <MudIconButton Href="/settings" Icon="@Icons.Material.Filled.Settings" Class="text-clr" /> *@
+            <MudIconButton Href="/history" Icon="@Icons.Material.Filled.History" Class="text-clr" />
+            <MudIconButton Href="/profile" Icon="@Icons.Material.Filled.AccountCircle" Class="text-clr" />
+
+    </MudToolBar>
+
+</MudAppBar>
+
+    <!-- Drawer (toggles full/mini) -->
+    <MudDrawer @bind-Open="_drawerOpen"
+               Variant="DrawerVariant.Responsive"
+               Elevation="1"
+               MiniVariantWidth="56px"
+               Width="220px"
+               ClipMode="DrawerClipMode.Always"
+               Class="custom-drawer">
+
+        <MudNavMenu Dense="true" Color="Color.Default">
+            <MudNavLink Href="/weather"  Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.Home" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">Home</span>
+                }
+            </MudNavLink>
+            <MudNavLink Href="/favourites" Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.Star" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">Favourite City</span>
+                }
+            </MudNavLink>
+
+            <MudNavLink Href="/alerts" Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.Notifications" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">Alerts</span>
+                }
+            </MudNavLink>
+
+            @* <MudNavLink Href="/settings" Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">Settings</span>
+                }
+            </MudNavLink> *@
+
+            <MudNavLink Href="/history" Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.History" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">History</span>
+                }
+            </MudNavLink>
+            <MudNavLink Href="/profile" Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.AccountCircle" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">Profile</span>
+                }
+            </MudNavLink>
+        </MudNavMenu>
+
+    </MudDrawer>
+
+    <!-- Main content -->
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
+<style>
+    .app-clr{
+        background-color: #1A4A4D;
+    }
+
+    .icon-clr
+    {
+        color:white;
+    }
+    .text-clr{
+        color:white;
+    }
+    .sb-text{
+        color: #2D7175;
+    }
+    /* ACTIVE nav link text + icon color */
+    a.mud-nav-link.active,
+    .mud-nav-link.mud-nav-link-active {
+        color:  #75422D !important;
+    }
+    .mud-nav-link.mud-icon-root{
+        color: #75422D;
+    }
+
+        /* icon inside the active link */
+        .mud-nav-link.mud-nav-link-active .mud-icon-root {
+        color: #75422D !important;
+        }
+
+    /* Customize hover effect */
+    .mud-nav-link:hover {
+        color: #1A4A4D !important; /* Choose a shade that fits your theme */
+    }
+    .mud-icon-root:hover{
+        color: #75422D;
+    }
+    .mud-icon-button:hover{
+        color: #75422D;
+    }
+</style>

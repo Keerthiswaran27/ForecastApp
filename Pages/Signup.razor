@@ -1,0 +1,241 @@
+﻿@page "/signup"
+@layout HomeLayout
+@using MudBlazor
+@using CreateUserService.Services
+@inject SignupService CreateUserService
+@inject NavigationManager NavigationManager
+
+<PageTitle>sign up</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex justify-center mt-12">
+    <MudPaper Elevation="10" Class="p-6 rounded-3">
+
+        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">Create Account</MudText>
+
+        <MudTextField Label="Name"
+                      @bind-Value="name"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Person"
+                      Class="mb-3"
+                      Required="true" />
+
+        <MudTextField Label="Email"
+                      @bind-Value="email"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Email"
+                      Class="mb-3"
+                      Required="true"
+                      Immediate="true"
+                      InputType="InputType.Email" />
+
+        <MudTextField Label="Password"
+                      @bind-Value="password"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                      Class="mb-4"
+                      InputType="InputType.Password"
+                      Required="true" />
+        <MudTextField Label="confirm password"
+                      @bind-Value="confirm_password"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                      Class="mb-4"
+                      InputType="InputType.Password"
+                      Required="true" />
+
+        <MudButton Variant="Variant.Filled"
+                   Class="bn"
+                   OnClick="SignUpAsync"
+                   FullWidth="true">
+            Sign Up
+        </MudButton>
+
+        <MudText Color="Color.Error" Typo="Typo.subtitle2" Class="mt-3">
+            @message
+        </MudText>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string name = string.Empty;
+    private string message = string.Empty;
+    private string confirm_password = string.Empty;
+    private async Task SignUpAsync()
+    {
+        try
+        {
+            if (password == confirm_password)
+            {
+                bool result = await CreateUserService.CreateDataAsync(email, password, name);
+                if (result)
+                {
+                    Console.WriteLine("Successful signup account created");
+                    NavigationManager.NavigateTo("/login");
+                }
+                else
+                {
+                    message = $"wrong credentials try again";
+                    Console.WriteLine("Error: Failed SignUp");
+                }
+            }
+            else
+            {
+                message = $"confirm password should match";
+            }
+        }
+        catch (Exception Ex)
+        {
+            Console.WriteLine($"Error: {Ex.Message}");
+            message = "Something went wrong try again";
+        }
+    }
+}
+<style>
+    /* Page Background */
+    body {
+        background-color: #D1E7E8;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .con-1{
+        width:100%;
+        height:100vh;
+        background-color: #D1E7E8;
+        margin:0;
+
+        padding:0;
+    }
+    /* Centering the Container */
+    .mud-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 85vh;
+    }
+
+    /* Form Box (Paper) */
+    .mud-paper {
+        background-color: #ffffff;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 16px rgba(33, 150, 243, 0.25);
+        padding: 2.5rem;
+        max-width: 420px;
+        width: 100%;
+        transition: transform 0.2s ease;
+    }
+
+        .mud-paper:hover {
+            transform: scale(1.01);
+        }
+
+    /* Input Fields - Let MudBlazor handle them naturally */
+    .mud-input, .mud-input-control {
+        border: none !important;
+        border-radius: 10px !important;
+        background-color: #f9fbfd !important;
+    }
+
+    /* Main Button Styling */
+    .mud-button {
+        border-radius: 12px;
+        font-weight: 600;
+        height: 50px;
+        background-color: #2D7175 !important;
+        color: white !important;
+        transition: background-color 0.3s ease;
+    }
+
+        .mud-button:hover {
+            background-color: #2D7175 !important;
+        }
+
+    /* Error or Status Message */
+    .mud-typography.mt-3 {
+        text-align: center;
+        color: #d32f2f;
+    }
+
+    /* Title Text */
+    .mud-typography.mb-4 {
+        color: #0d47a1;
+        font-weight: bold;
+        text-align: center;
+    }
+    /* Rounded corners for MudTextField outline */
+    .mud-input-outlined {
+        border-radius: 12px !important;
+    }
+
+        /* Optional: Also apply to the fieldset directly to ensure compatibility */
+        .mud-input-outlined > fieldset {
+            border-radius: 12px !important;
+            border-width: 1px;
+        }
+
+    /* Optional: Smaller label positioning fix for a cleaner look */
+    .mud-input-label {
+        border-radius: 12px !important;
+    }
+    /* Add margin-bottom to each input container */
+    .mud-input-control {
+        margin-bottom: 24px !important; /* Adjust this value as needed */
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #D1E7E8;
+        background-attachment: fixed;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .MudPaper {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.5s ease-in-out;
+    }
+
+    fadeInUp {
+        from
+
+    {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    }
+
+    .MudTextField {
+        border-radius: 8px;
+    }
+
+    .bn {
+        font-weight: bold;
+        background-color: #2D7175;
+        transition: background-color 0.3s ease-in-out;
+    }
+
+        .bn:hover {
+            background-color: #D1E7E8;
+        }
+
+    .MudText {
+        text-align: center;
+    }
+
+
+</style>

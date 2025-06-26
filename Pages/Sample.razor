@@ -1,0 +1,26 @@
+﻿@page "/sample"
+@layout HomeLayout
+@using MudBlazor
+@inject IDialogService DialogService
+@using ForecastApp.Dialogs
+
+
+<MudButton Color="Color.Primary" OnClick="ShowDialogAsync">Open Dialog</MudButton>
+    
+@code{
+private async Task ShowDialogAsync()
+{
+    var options = new DialogOptions { CloseOnEscapeKey = true };
+    var dialog = await DialogService.ShowAsync<SimpleDialog>("Confirm Action", options);
+    var result = await dialog.Result;
+
+    if (!result.Canceled)
+    {
+        Console.WriteLine("User clicked Yes");
+    }
+    else
+    {
+        Console.WriteLine("User clicked No");
+    }
+}
+}

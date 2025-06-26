@@ -1,0 +1,197 @@
+﻿@page "/login"
+@layout HomeLayout
+@using UDService.Services
+@inject Userdata UDService
+@using SigninService.Services
+@inject Loginservice SigninService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login</PageTitle>
+
+<MudPaper Class="login-box mx-auto p-6 rounded-xl shadow-md" Elevation="6">
+    <MudText Typo="Typo.h5" Class="txt-title text-center mb-4 " >Login</MudText>
+
+    <MudTextField @bind-Value="email" Label="Email Id" Variant="Variant.Outlined" Placeholder="YourEmail@gmail.com"
+        Class="t1 mb-3" />
+
+    <MudTextField @bind-Value="password" Label="Password" Variant="Variant.Outlined" Placeholder="YourName123*"
+                   Class="t1 mb-3" InputType="@PasswordInput" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ButtonTestclick" AdornmentAriaLabel="Show Password" />
+
+    <MudButton Variant="Variant.Filled" OnClick="LoginAsync" Class="btn1 w-full mb-2">Login
+    </MudButton>
+
+    <MudText Typo="Typo.body2" Class="text-error message1">@message</MudText>
+
+    <MudText Typo="Typo.body2" Align="Align.Center">
+        Didn't have an account?
+        @* <MudText Link="true" Class="" OnClick="Signup"> Create One</MudText> *@
+        <MudLink Href="/signup" Class="btn11"><span class="acc">Create account</span></MudLink>
+    </MudText>
+</MudPaper>
+
+@code {
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string message = string.Empty;
+    public void Signup()
+    {
+        NavigationManager.NavigateTo("/signup");
+    }
+    private async Task LoginAsync()
+    {
+        try
+        {
+            bool result = await SigninService.CheckDataAsync(email,password);
+            if (result)
+            {
+                Console.WriteLine("Successful Login");
+                //here we have to pass the email to forecast page
+                NavigationManager.NavigateTo("/weather");
+                
+            }
+            else
+            {
+                message = "Login failed something went wrong";
+            }
+
+        }
+        catch (Exception ex)
+        {
+            message = $"Error : {ex}";
+        }
+
+    }
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void ButtonTestclick()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+
+}
+<style>
+    .txt-title{
+        color: #1A4A4D;
+        font-weight:600;
+    }
+    .acc {
+        color: blue;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: #D1E7E8;
+        background-attachment: fixed;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .login-box {
+        background-color: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        animation: slideUp 0.5s ease-in-out;
+        margin-top:110px;
+    }
+
+    slideUp {
+        from
+
+    {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    }
+
+    .btn1 {
+        font-weight: bold;
+        background-color: #2D7175;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn1:hover {
+            background-color: #1A4A4D;
+        }
+
+    .text-error {
+        color: red;
+    }
+
+    .btn11 {
+        font-weight: bold;
+        color: #2D7175;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+        .btn11:hover {
+            color: #2D7175;
+            text-decoration: underline;
+        }
+        /* Make the whole login box wider and shorter */
+.login-box {
+        background: white;
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    width: 100%;
+    max-width: 400px; /* adjust width here as needed */
+    box-shadow: 0 8px 24px rgba(0, 123, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    text-align: center;
+}
+
+/* Make the input fields longer horizontally */
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    max-width: 300px;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid #999;
+    background-color: #e8f0fe;
+}
+
+/* Center and stretch the login button */
+.btn1 {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn1:hover {
+    background: #2D7175;
+    transform: scale(1.02);
+}
+.btn11{
+    color: #1e88e5;
+}
+</style>    

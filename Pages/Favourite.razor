@@ -1,0 +1,183 @@
+﻿@page "/favourites"
+@layout DashboardLayout
+@using UDService.Services
+@inject Userdata UDService
+@using WSService.Services
+@inject WeatherService WSService
+@using WRModel.Models
+@using MFModel.Models
+@using RSService.Services
+@inject RegisterService RSService
+<PageTitle>Favourite</PageTitle>
+
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    @if (weatherfav != null && weatherfav.Count > 0)
+    {
+        <div style="text-align: center; margin-top: 1rem; margin-bottom: 1.5rem;">
+            <MudText Typo="Typo.h4" Class="font-bold" Style="color: #1A4A4D;      ">
+                Your Favourite Cities
+            </MudText>
+            <MudText Typo="Typo.subtitle2" Class="text-muted">
+                Stay updated with the latest forecasts for the places you care about.
+            </MudText>
+        </div>
+        @foreach (var cityForecast in weatherfav)
+        {
+            var cityName = cityForecast.forecast[0].CityName;
+
+            <MudPaper Class="mb-6 p-4" Style="border-radius: 16px; background:rgba(255,255,255,0.4);">
+                <div class="d-flex justify-between align-center mb-2">
+                    <MudText Typo="Typo.h5">🌆 @cityName</MudText>
+                    <MudSpacer/>
+                    <MudCheckBox T="bool" @bind-Value="cityForecast.IsFavourite" @onclick="() => ToggleFavourite(cityForecast.forecast[0].CityName, cityForecast.IsFavourite)"
+                            CheckedIcon="@Icons.Material.Filled.Favorite" UncheckedIcon="@Icons.Material.Filled.FavoriteBorder"
+                            Color="Color.Error"/>
+
+                </div>
+
+                <!-- Horizontal daily forecast scroll -->
+                <div class="horizontal-scroll-container">
+                    @foreach (var day in cityForecast.forecast)
+                    {
+                        <MudCard Class="weather-day-card mx-2">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle2">@day.Date.ToString("ddd")</MudText>
+                                <MudText Typo="Typo.h6">@day.Temp°C</MudText>
+                                <MudText Typo="Typo.body2">@day.Main</MudText>
+                                <MudText Typo="Typo.caption">Humidity: @day.Humidity%</MudText>
+                                <MudText Typo="Typo.caption">Wind: @day.WindSpeed km/h</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+    }
+    else
+    {
+        <MudContainer Class="container-0 object-center">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        </MudContainer>
+    }
+</MudContainer>
+
+
+
+
+@code{
+    private List<FavWeather> weatherfav = new();
+    private List<string> cities = new();
+    private bool isChecked = true;
+    protected override async Task OnInitializedAsync()
+    {
+        await GetFavouriteCities();
+    }
+    private async Task GetFavouriteCities()
+    {
+        cities = await WSService.GetFavouritesAsync();
+        weatherfav.Clear();
+        foreach(var city in cities)
+        {
+            var fav = new FavWeather();
+            fav.forecast = await RSService.GetForecastAsync(city, 5);
+            weatherfav.Add(fav);
+        }
+    }
+    private async Task ToggleFavourite(string city, bool check)
+    {
+        if (!check)
+        {
+            if (!cities.Contains(city))
+            {
+                cities.Add(city);
+                await SaveFavourites();
+
+            }
+            else
+            {
+                Console.WriteLine("True and then city is in list");
+                await SaveFavourites();
+            }
+        }
+        else if (check)
+        {
+            if (cities.Contains(city))
+            {
+                cities.Remove(city);
+                await SaveFavourites();
+                foreach(var c in weatherfav)
+                {
+                    if(c.forecast[0].CityName == city)
+                    {
+                        c.IsFavourite = false;
+                        
+                    }
+                }
+                weatherfav.Clear();
+                await GetFavouriteCities();
+            }
+            else
+            {
+                Console.WriteLine("false and city is not there");
+                await SaveFavourites();
+            }
+        }
+        foreach(var c in cities)
+        {
+            Console.WriteLine(c);
+        }
+    }
+    private async Task SaveFavourites()
+    {
+
+        bool r1 = await WSService.UpdateProfileAsync(cities);
+        if (r1)
+        {
+            Console.WriteLine("fav list updated");
+        }
+    }
+    private async Task RemoveFromFavourites(string city)
+    {
+        cities.Remove(city);
+        weatherfav.RemoveAll(w => w.forecast[0].CityName == city);
+        Console.WriteLine($"Removed {city} from favourites.");
+        await SaveFavourites();
+    }
+}
+<style>
+    .horizontal-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 16px;
+        padding-bottom: 1rem;
+    }
+
+    .weather-day-card {
+        min-width: 160px;
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .weather-day-card:hover {
+            transform: scale(1.05);
+        }
+
+    body {
+        background-color: #D1E7E8;
+    }
+
+    .container-0 {
+        height: 600px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+</style>

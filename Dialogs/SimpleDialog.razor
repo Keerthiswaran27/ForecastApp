@@ -1,0 +1,29 @@
+﻿@using MudBlazor
+@namespace ForecastApp.Dialogs
+@inject NavigationManager NavigationManager
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">This is a Dialog</MudText>
+        <MudText Typo="Typo.body2">Are you sure you want to continue?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Yes</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">No</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+        NavigationManager.NavigateTo("/login");
+
+    }
+
+    void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

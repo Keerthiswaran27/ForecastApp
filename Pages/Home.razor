@@ -1,0 +1,326 @@
+﻿@page "/counter"
+
+@inject HttpClient Http
+
+<PageTitle>Weather</PageTitle>
+@* 
+<style>
+    .card{
+        max-width: auto;
+        margin: 10px;  
+    }
+    .card-content{
+        width: fit-content;
+        align-self: center;
+    }
+    
+    
+</style>
+<div>
+<MudCard Class="card">
+    <MudCardContent Class="card-content">
+        <div style="display: flex; align-items: center;">
+            <MudText>Chenna IN</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Favorite" />
+
+        </div>
+    </MudCardContent>
+</MudCard>
+</div>
+
+<MudText Typo="Typo.h4" Class="mb-4">Weather App</MudText>
+
+<MudTextField @bind-Value="cityName" Placeholder="Enter city name" Variant="Variant.Outlined" Class="mr-2" />
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GetWeather">Search</MudButton>
+
+<MudSpacer />
+
+@if (isLoading)
+{
+    <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+}
+else if (errorMessage != null)
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (currentWeather != null)
+{
+    <!-- Main weather card -->
+    <MudCard Class="my-4 p-4">
+        <MudText Typo="Typo.h5">@cityName</MudText>
+        <MudText Typo="Typo.h2">@currentWeather.TempCelsius °C</MudText>
+        <MudText Typo="Typo.subtitle1">@currentWeather.Description</MudText>
+        <MudGrid Class="mt-2">
+            <MudItem xs="6">
+                <MudText>Humidity: @currentWeather.Humidity %</MudText>
+            </MudItem>
+            <MudItem xs="6">
+                <MudText>Wind: @currentWeather.WindSpeed km/h</MudText>
+            </MudItem>
+        </MudGrid>
+    </MudCard>
+
+    <!-- Today & Tomorrow cards -->
+    <MudGrid>
+        @foreach (var day in forecastList.Take(2))
+        {
+            <MudItem xs="6">
+                <MudCard Class="p-4">
+                    <MudText Typo="Typo.subtitle1">@day.DateLabel</MudText>
+                    <MudText Typo="Typo.h4">@day.TempCelsius °C</MudText>
+                    <MudIcon Icon="@day.Icon" Size="Size.Large" />
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <!-- Optional bottom message -->
+    @if (isSearchLimitExceeded)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mt-4">
+            Search limit exceeded. Please log in or sign up to continue.
+        </MudAlert>
+    }
+}
+
+
+@code {
+    private string cityName = "";
+    private bool isLoading = false;
+    private string? errorMessage = null;
+    private bool isSearchLimitExceeded = false;
+
+    private WeatherForecast? currentWeather;
+    private List<WeatherForecast> forecastList = new();
+
+    private async Task GetWeather()
+    {
+        if (string.IsNullOrWhiteSpace(cityName))
+        {
+            errorMessage = "Please enter a city name.";
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = null;
+        forecastList.Clear();
+        currentWeather = null;
+        isSearchLimitExceeded = false;
+
+        try
+        {
+            string apiKey = "d44e84653bedfb2f9682a4874783732d";
+            string url = $"https://api.openweathermap.org/data/2.5/forecast?q={cityName}&appid={apiKey}&units=metric";
+
+            var response = await Http.GetFromJsonAsync<ForecastResponse>(url);
+
+            if (response != null && response.list != null)
+            {
+                var grouped = response.list
+                .GroupBy(x => x.dt_txt.Substring(0, 10))
+                .Select(g => g.First())
+                .Take(4);
+
+                var list = grouped.Select(x => new WeatherForecast
+                {
+                    Date = DateTime.Parse(x.dt_txt),
+                    DateLabel = x.dt_txt.StartsWith(DateTime.UtcNow.ToString("yyyy-MM-dd")) ? "Today"
+                : DateTime.Parse(x.dt_txt).ToString("dddd"),
+                    TempCelsius = x.main.temp,
+                    Humidity = x.main.humidity,
+                    WindSpeed = x.wind.speed,
+                    Description = x.weather.FirstOrDefault()?.description ?? "",
+                    Icon = GetWeatherIcon(x.weather.FirstOrDefault()?.main ?? "")
+                }).ToList();
+
+                currentWeather = list.FirstOrDefault();
+                forecastList = list.Skip(1).ToList();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            if (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                isSearchLimitExceeded = true;
+            }
+            else
+            {
+                errorMessage = $"Error fetching weather: {ex.Message}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error fetching weather: {ex.Message}";
+        }
+
+        isLoading = false;
+    }
+
+    private string GetWeatherIcon(string main)
+    {
+        return main switch
+        {
+            "Clear" => Icons.Material.Filled.WbSunny,
+            "Clouds" => Icons.Material.Filled.Cloud,
+            "Rain" => Icons.Material.Filled.Umbrella,
+            "Snow" => Icons.Material.Filled.AcUnit,
+            "Thunderstorm" => Icons.Material.Filled.FlashOn,
+            _ => Icons.Material.Filled.WbCloudy
+        };
+    }
+
+    public class WeatherForecast
+    {
+        public DateTime Date { get; set; }
+        public string DateLabel { get; set; } = "";
+        public double TempCelsius { get; set; }
+        public int Humidity { get; set; }
+        public double WindSpeed { get; set; }
+        public string Description { get; set; } = "";
+        public string Icon { get; set; } = "";
+    }
+
+    public class ForecastResponse
+    {
+        public List<ForecastItem> list { get; set; } = new();
+    }
+
+    public class ForecastItem
+    {
+        public MainData main { get; set; } = new();
+        public List<WeatherData> weather { get; set; } = new();
+        public WindData wind { get; set; } = new();
+        public string dt_txt { get; set; } = "";
+    }
+
+    public class MainData
+    {
+        public double temp { get; set; }
+        public int humidity { get; set; }
+    }
+
+    public class WeatherData
+    {
+        public string main { get; set; } = "";
+        public string description { get; set; } = "";
+    }
+
+    public class WindData
+    {
+        public double speed { get; set; }
+    }
+} *@
+
+
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <!-- Search Bar -->
+    <div class="d-flex align-center mb-6">
+        <MudTextField @bind-Value="searchCity" 
+                      Label="Enter city name" 
+                      Variant="Variant.Outlined"
+                      Class="flex-grow-1 mr-3"
+                      AdornmentIcon="@Icons.Material.Filled.LocationOn" />
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary"
+                   EndIcon="@Icons.Material.Filled.Search"
+                   OnClick="SearchWeather">
+            SEARCH
+        </MudButton>
+    </div>
+
+    <!-- Weather Card -->
+    <MudPaper Elevation="3" Class="pa-6 text-center" Style="border-radius: 12px;">
+        <!-- Weather Icon -->
+        <MudIcon Icon="@WeatherIcon" Size="Size.Large" Color="Color.Info" Class="mb-2" />
+        
+        <!-- City and Current Weather -->
+        <MudText Typo="Typo.h5" Class="mb-1">@City</MudText>
+        <MudText Typo="Typo.h2" Class="mb-2">@Temperature°</MudText>
+        <MudText Typo="Typo.body1" Class="mb-4">@WeatherCondition</MudText>
+
+        <!-- Weather Stats -->
+        <div class="d-flex justify-space-around mb-5">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.WaterDrop" Size="Size.Small" Class="mr-1" />
+                <div>
+                    <MudText Typo="Typo.body2">Humidity</MudText>
+                    <MudText Typo="Typo.body1">@Humidity%</MudText>
+                </div>
+            </div>
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Air" Size="Size.Small" Class="mr-1" />
+                <div>
+                    <MudText Typo="Typo.body2">Wind</MudText>
+                    <MudText Typo="Typo.body1">@WindSpeed mph</MudText>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forecast -->
+        <div class="d-flex justify-space-around">
+            <div class="text-center">
+                <MudText Typo="Typo.body2">Today</MudText>
+                <MudIcon Icon="@TodayIcon" Size="Size.Small" Class="my-1" />
+                <MudText Typo="Typo.h6">@TodayTemp°</MudText>
+            </div>
+            <div class="text-center">
+                <MudText Typo="Typo.body2">Tomorrow</MudText>
+                <MudIcon Icon="@TomorrowIcon" Size="Size.Small" Class="my-1" />
+                <MudText Typo="Typo.h6">@TomorrowTemp°</MudText>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-4" Icon="@Icons.Material.Filled.Warning">
+            @ErrorMessage
+        </MudAlert>
+    }
+</MudContainer>
+
+@code {
+    private string searchCity = "";
+    private string City = "City";
+    private string Temperature = "72";
+    private string WeatherCondition = "Cloudy";
+    private string Humidity = "65";
+    private string WindSpeed = "8";
+    private string TodayTemp = "72";
+    private string TomorrowTemp = "82";
+    private string ErrorMessage = "";
+    
+    // Icons
+    private string WeatherIcon = Icons.Material.Filled.Cloud;
+    private string TodayIcon = Icons.Material.Filled.WbCloudy;
+    private string TomorrowIcon = Icons.Material.Filled.WbSunny;
+
+    private void SearchWeather()
+    {
+        if (string.IsNullOrWhiteSpace(searchCity))
+        {
+            ErrorMessage = "Please enter a city name";
+            return;
+        }
+        
+        // Simulate API limit error
+        ErrorMessage = "Search limit exceeded. Please log in or sign up to continue.";
+        
+        // In real app: Call weather API and update properties + icons
+        // UpdateWeatherIcons(apiResponse.WeatherCondition);
+    }
+    
+    // Example method to update icons based on weather condition
+    private void UpdateWeatherIcons(string condition)
+    {
+        WeatherIcon = condition switch
+        {
+            "Sunny" => Icons.Material.Filled.WbSunny,
+            "Cloudy" => Icons.Material.Filled.Cloud,
+            "Rainy" => Icons.Material.Filled.Umbrella,
+            _ => Icons.Material.Filled.WbSunny
+        };
+    }
+}
