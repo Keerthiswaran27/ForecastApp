@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: forecastapp
+    env: static
+    staticPublishPath: dist/wwwroot
