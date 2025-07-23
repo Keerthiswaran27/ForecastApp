@@ -56,10 +56,10 @@ namespace ENService.Services
                         { "humidity", city.forecast[0].Humidity },
                         { "wind_speed", city.forecast[0].WindSpeed }
                     };
-                    //await _js.InvokeVoidAsync("sendWeatherEmail",
-                    //            "service_bvykk0s",
-                    //            "template_1lpea97",
-                    //            templateParams);
+                    await _js.InvokeVoidAsync("sendWeatherEmail",
+                                "service_bvykk0s",
+                                "template_1lpea97",
+                                templateParams);
                 }
             }
         }
