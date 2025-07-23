@@ -1,0 +1,16 @@
+﻿@page "/google"
+@using GASService.Services
+@inject GoogleAuthService GoogleAuthService
+@inject NavigationManager NavManager
+
+<h3>Login with Google</h3>
+
+<button @onclick="StartGoogleLogin">Login with Google</button>
+
+@code {
+    private void StartGoogleLogin()
+    {
+        var loginUrl = GoogleAuthService.BuildGoogleOAuthUrl();
+        NavManager.NavigateTo(loginUrl, forceLoad: true);
+    }
+}

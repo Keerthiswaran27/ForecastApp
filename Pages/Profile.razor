@@ -1,5 +1,7 @@
 ﻿@page "/profile"
 @layout DashboardLayout
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using USService.Services
 @inject UserService USService
 @using HService.Services
@@ -10,131 +12,144 @@
 @using PDModel.Models
 @using PSService.Services
 @inject ProfileService PSService
-
+@using DFModel.Models
+@using MFModel.Models
+@using RSService.Services
+@inject RegisterService RSService
 <PageTitle>Profile</PageTitle>
-
-
-@if(profile != null)
+@if(condition)
 {
-    <MudContainer Class="container-1 mt-10">
-        <MudText Typo="Typo.h4" Class="mb-3" Align="Align.Center">User Dashboard</MudText>
-        <MudContainer Class="con-1">
+
+    @if(weatherfav1!=null)
+
+    {
+        <MudContainer Class="mc-1 mt-4">
             <MudGrid Gutter="true">
                 <MudItem md="12">
-                    <MudPaper Class="pat ">
-                        <MudText Typo="Typo.caption">Username</MudText>
-                        <MudText>@profile.Name</MudText>
-                    </MudPaper>
-                </MudItem>
-                <MudItem md="12">
-                    <MudPaper Class="pat ">
-                        <MudText Typo="Typo.caption">User Email</MudText>
-                        <MudText>@profile.Email</MudText>
-                    </MudPaper>
-                </MudItem>
-                <MudItem md="12">
-                    <MudPaper Class="pat ">
-                        <MudText Typo="Typo.caption">Alert Email</MudText>
-                        <MudText>@alert.Email</MudText>
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
-        </MudContainer>
-        <MudContainer Class="con-2 mt-3">
-            <MudGrid Gutter="true">
-
-
-
-                <MudItem md="12">
-                    <MudContainer Class="box-1">
-                        <div style="overflow-x:auto;">
-                            <MudText Typo="Typo.h6" Class="mb-1" Align="Align.Center">Latest Weather Searches</MudText>
-                            <MudTable Items="@history.TakeLast(3)" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
-
-                                <RowTemplate>
-                                    <MudTd Style="color:#2C6669" DataLabel="City">@context.City</MudTd>
-                                    <MudTd Style="color:#2C6669" DataLabel="Temperature">@context.Temp</MudTd>
-                                    <MudTd Style="color:#2C6669" DataLabel="Humidity">@context.Hum</MudTd>
-                                    <MudTd Style="color:#2C6669" DataLabel="Wind Speed">@context.Windspeed</MudTd>
-                                    <MudTd Style="color:#2C6669" DataLabel="Condition">@context.Condition</MudTd>
-                                    <MudTd Style="color:#2C6669" DataLabel="Date">@context.Created_at.ToString("dd-MM-yyyy")</MudTd>
-                                    <MudTd Style="color:#2C6669" DataLabel="Time">@context.Created_at.ToString("hh:mm tt")</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </div>
+                    <MudContainer>
+                        <MudText Style="font-size: 6rem; font:900;" Typo="Typo.h3">Hello..@profile.Name</MudText>
                     </MudContainer>
                 </MudItem>
+            </MudGrid>
+            <MudGrid Gutter="true" Class="mt-3">
+                <MudItem md="3">
+                    <MudPaper Style="height:100%" Class="favourite-paper">
+                        <div style="overflow-x:auto;">
+                            <MudText Typo="Typo.h6" Class="mb-1" Align="Align.Center">Favourite Cities</MudText>
+                            @if(weatherfav != null && weatherfav.Count>0)
+                            {
+                                <MudTable Items="@weatherfav" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
+                                    <RowTemplate>
+                                        <MudTd Style="color:#2C6669;">@context.forecast[0].CityName</MudTd>
+                                        <MudTd Style="color:#2C6669;">@context.forecast[0].Temp</MudTd>
+                                        <MudTd Style="color:#2C6669;">@context.forecast[0].Main</MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            }
+                            else
+                            {
+                                <MudText Align="Align.Center">No Favourites Yet Selected</MudText>
+                            }
+                        </div>
+                    </MudPaper>
 
-
-
-
-                <MudItem md="6">
-                    <MudContainer Class="box-2">
-
-                        <MudGrid Gutter="True">
-
-                            <MudItem md="6">
-                                <MudContainer Class="alert-1">
-                                    <MudText Align="Align.Center">Temp : @alert.Temp°c</MudText>
-                                </MudContainer>
-                            </MudItem>
-
-                            <MudItem md="6">
-                                <MudContainer Class="alert-1">
-                                    <MudText Align="Align.Center">Humidity : @alert.Humidity%</MudText>
-                                </MudContainer>
-                            </MudItem>
-
-                            <MudItem md="12">
-                                <MudContainer Class="alert-1">
-                                    <MudText Typo="Typo.h6" Align="Align.Center">Alert cities</MudText>
-                                    <div style="overflow-x:auto;">
-                                        <MudTable Items="@alert.Cities" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
+                </MudItem>
+                <MudItem md="9">
+                    <MudGrid Gutter="true">
+                        <MudItem md="12">
+                            <MudPaper Class="search-paper">
+                                <div style="overflow-x:auto;">
+                                    <MudText Typo="Typo.h6" Class="mb-1" Align="Align.Center">Latest Weather Searches</MudText>
+                                    @if(history!=null && history.Count>0)
+                                    {
+                                        <MudTable Items="@history.TakeLast(4)" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
                                             <RowTemplate>
-                                                <MudTd Style="color:#2C6669;background-color:aliceblue;"><MudText>@context</MudText></MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="City">@context.City</MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="Temperature">@context.Temp°c</MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="Humidity">@context.Hum%</MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="Wind Speed">@(context.Windspeed)mps</MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="Condition">@context.Condition</MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="Date">@context.Created_at.ToString("dd-MM-yyyy")</MudTd>
+                                                <MudTd Style="color:#2C6669" DataLabel="Time">@context.Created_at.ToString("hh:mm tt")</MudTd>
+                                            </RowTemplate>
+                                        </MudTable>
+                                    }
+                                    else
+                                    {
+                                        <MudText Align="Align.Center">No Latest Search History</MudText>
+                                    }
+                                </div>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem md="6">
+                            <MudPaper Style="height:100%" Class="profile-paper">
+                                <MudText Typo="Typo.h6" Class="mb-1" Align="Align.Center">User Preferences</MudText>
+                                @if(alert.Email!=null && alert.Temp!=0 && alert.Humidity!=0)
+                                {
+                                    <MudText Class="mb-1" Style="color:#2C6669" Align="Align.Center">Alert Email : @alert.Email</MudText>
+                                    <MudText Class="mb-1" Style="color:#2C6669" Align="Align.Center">Alert Temperature : @alert.Temp°c</MudText>
+                                    <MudText Class="mb-1" Style="color:#2C6669" Align="Align.Center">Alert Humidity : @alert.Humidity%</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Align="Align.Center">Alert Details Not Yet Selected</MudText>
+                                }
+
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem md="6">
+                            <MudPaper Class="alert-paper">
+                                <MudText Typo="Typo.h6" Align="Align.Center">Alert cities</MudText>
+                                @if(weatherfav1!=null && weatherfav1.Count>0)
+                                {
+                                    <div style="overflow-x:auto;">
+                                        <MudTable Items="@weatherfav1" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
+                                            <RowTemplate>
+                                                <MudTd Style="color:#2C6669;"><MudText>@context.forecast[0].CityName</MudText></MudTd>
+                                                <MudTd Style="color:#2C6669;"><MudText>@context.forecast[0].Temp</MudText></MudTd>
+                                                <MudTd Style="color:#2C6669;"><MudText>@context.forecast[0].Main</MudText></MudTd>
                                             </RowTemplate>
                                         </MudTable>
                                     </div>
-                                </MudContainer>
-                            </MudItem>
-
-                        </MudGrid>
-                    </MudContainer>
-                </MudItem>
-
-
-
-                <MudItem md="6">
-                    <MudContainer Class="box-1">
-                        <div style="overflow-x:auto;">
-                            <MudText Typo="Typo.h6" Class="mb-1" Align="Align.Center">Favourite Cities</MudText>
-                            <MudTable Items="@cities" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
-                                <RowTemplate>
-                                    <MudTd Style="color:#2C6669;">@context</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </div>
-                    </MudContainer>
+                                }
+                                else
+                                {
+                                    <MudText Align="Align.Center">Alert Cities Not Yet Selected</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
                 </MudItem>
             </MudGrid>
         </MudContainer>
-    </MudContainer>
-}
+
+    }
+    else
+    {
+        <MudText>Error</MudText>
+    }
+    }
 else
 {
     <MudContainer Class="container-0 object-center">
         <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
     </MudContainer>
 }
+
+
+
 @code {
+    private bool condition = false;
     private string name = string.Empty;
     private string email = string.Empty;
     private string aemail = string.Empty;
     private List<Historydetails> history = new();
+    private List<DailyForecast> alertdetails = new();
     private List<string> cities = new();
     private ProfileDetails alert = new();
     private AuthDetails profile = new();
-
+    private List<FavWeather> weatherfav = new();
+    private List<FavWeather> weatherfav1 = new();
     protected override async Task OnInitializedAsync()
     {
         await GetHistory();
@@ -144,69 +159,63 @@ else
     {
         history = await HService.GetHistoryAsync();
 
+
     }
     private async Task GetFavouriteCities()
     {
         cities = await WSService.GetFavouritesAsync();
         alert = await PSService.GetAlertDetailsAsync();
+        alert = alert ?? new ProfileDetails(); // ✅ Prevents null reference
+
         profile = await PSService.GetProfileDetailsAsync();
-        name = profile.Name;
-        email = profile.Email;
-        aemail = alert.Email;
+        profile = profile ?? new AuthDetails(); // (Optional: Prevent null reference)
+
+        name = profile?.Name ?? "User";
+        email = profile?.Email ?? "Unknown";
+
+        foreach (var city in cities)
+        {
+            var fav = new FavWeather();
+            fav.forecast = await RSService.GetForecastAsync(city, 5);
+            weatherfav.Add(fav);
+        }
+
+        // ✅ Null check for alert.Cities before looping
+        if (alert.Cities != null)
+        {
+            foreach (var city in alert.Cities)
+            {
+                var fav = new FavWeather();
+                fav.forecast = await RSService.GetForecastAsync(city, 5);
+                weatherfav1.Add(fav);
+            }
+        }
+
+        condition = true;
     }
+
+   
 }
 <style>
     body{
         background-color: #D1E7E8;
         color: #1A4A4D;
     }
-    .container-1{
-        background-color: rgba(142, 185, 188,0.9);
-        height:auto;
-        width:800px;
-        padding:20px;
-        border-radius:20px;
+    .favourite-paper{
+        border-radius:22px;
+        padding: 10px;
     }
-    
-    .mud-input.mud-input-filled {
-        background-color: azure;
-        border-radius: 20px;
+    .search-paper{
+        border-radius:22px;
+        padding: 10px;
     }
-
-        .mud-input.mud-input-filled :hover {
-            background-color: azure;
-            border-radius: 20px;
-        }
-    .con-1{
-        width:760px;
-        margin-bottom:20px;
-        margin-top:20px;
-        background-color: #BADBDD;
-        padding:15px;
-        border-radius:20px;
+    .profile-paper{
+        border-radius:22px;
+        padding: 10px;
     }
-
-    .con-2 {
-        background-color: #BADBDD;
-        padding: 15px;
-        border-radius: 20px;
-    }
-    .box-1{
-        background-color:white;
-        height: 100%;
-        border-radius:20px;
+    .alert-paper{
+        border-radius:22px;
         padding:10px;
-    }
-    .alert-1{
-        padding:10px;
-        background-color:aliceblue;
-        border-radius:20px;
-    }
-    .box-2{
-        height:100%;
-        border-radius: 20px;
-        padding: 15px;
-        background-color: white;
     }
 
     .container-0 {
@@ -216,10 +225,4 @@ else
         justify-content: center;
         align-items: center;
     }
-    .pat
-    {
-        border-radius:20px;
-        padding:10px;
-    }
-    
 </style>

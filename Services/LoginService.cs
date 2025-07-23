@@ -1,9 +1,14 @@
-﻿using SigninService.Models;
+﻿using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.Authorization;
+using SigninService.Models;
 using SignModel.Models;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using UDService.Services;
+using CAPService.Services;
+
+
 namespace SigninService.Services
 {
     public class Loginservice
@@ -12,14 +17,30 @@ namespace SigninService.Services
         private readonly string BaseUrl = "https://buvihfrcbabpgtxyepfy.supabase.co";
         private readonly HttpClient httpc;
         private readonly Userdata _userData;
-        public Loginservice(Userdata userData)
+        private readonly IJSRuntime js;
+     
+        private readonly AuthenticationStateProvider authProvider;
+
+        public Loginservice(Userdata userData, IJSRuntime jsRuntime, AuthenticationStateProvider authProvider1)
         {
             httpc = new HttpClient { BaseAddress = new Uri(BaseUrl) };
-            _userData = userData;      
+            _userData = userData;
+            js = jsRuntime;
+            authProvider = authProvider1;
         }
         private string accessToken = string.Empty;
         private string uid = string.Empty;
+        public async Task SignOutAsync()
+        {
+            await js.InvokeVoidAsync("sessionStorage.clear");
 
+            // Notify Blazor that user is logged out
+            if (authProvider is CustomAuthProvider customProvider)
+            {
+                customProvider.MarkUserAsLoggedOut();
+            }
+
+        }
         public async Task<bool> CheckDataAsync(string Email, string Password)
         {
             try
@@ -49,6 +70,13 @@ namespace SigninService.Services
                     {
                         accessToken = authResponse.access_token;
                         uid = authResponse.user?.id;
+                        await js.InvokeVoidAsync("sessionStorage.setItem", "accessToken", accessToken);
+                        await js.InvokeVoidAsync("sessionStorage.setItem", "uid", uid);
+                        var accessToken1 = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
+                        var uid1 = await js.InvokeAsync<string>("sessionStorage.getItem", "uid");
+                       
+                        ((CustomAuthProvider)authProvider).MarkUserAsAuthenticated(uid);
+
                         string table = "profile";
                         string filter = $"uid=eq.{uid}";
                         var request1 = new HttpRequestMessage(HttpMethod.Get, $"/rest/v1/{table}?{filter}");
@@ -63,8 +91,12 @@ namespace SigninService.Services
                             var options1 = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                             var nameData = JsonSerializer.Deserialize<List<FavouriteResult1>>(result1, options1);
                             Console.WriteLine("name fetched");
-                            Console.WriteLine(nameData?.FirstOrDefault()?.name ?? "No name found");
-                            
+
+
+                            await js.InvokeVoidAsync("sessionStorage.setItem", "name", nameData?.FirstOrDefault()?.name);
+                            var lsname = await js.InvokeAsync<string>("sessionStorage.getItem", "name");
+                            Console.WriteLine($"from ls: {lsname}");
+
                             string table1 = "user_details";
                             string filter1 = $"uid=eq.{uid}";
                             var request2 = new HttpRequestMessage(HttpMethod.Get, $"/rest/v1/{table1}?{filter1}");

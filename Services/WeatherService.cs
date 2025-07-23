@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using Microsoft.JSInterop;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using UDService.Services;
@@ -11,14 +12,19 @@ namespace WSService.Services
         private readonly string BaseUrl = "https://buvihfrcbabpgtxyepfy.supabase.co";
         private readonly HttpClient httpc;
         private readonly Userdata _userData;
-        public WeatherService(Userdata userData)
+        private readonly IJSRuntime js;
+        
+        public WeatherService(Userdata userData, IJSRuntime jsRuntime)
         {
             httpc = new HttpClient { BaseAddress = new Uri(BaseUrl) };
             _userData = userData;
+            js = jsRuntime;
         }
+        private string accessToken1 = "";
+        private string uid1 = "";
         public class FavouriteResult
         {
-            public string[] favourite { get; set; }
+            public string[]? favourite { get; set; }
         }
         public async Task<bool> GetBoolAsync(string city)
         {
@@ -48,12 +54,14 @@ namespace WSService.Services
         }
         public async Task<List<string>> GetFavouritesAsync()
         {
+            accessToken1 = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
+            uid1 = await js.InvokeAsync<string>("sessionStorage.getItem", "uid");
             string table = "profile";
-            string filter = $"uid=eq.{_userData.Uid}";
+            string filter = $"uid=eq.{uid1}";
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"/rest/v1/{table}?{filter}");
             request.Headers.Add("apikey", ApiKey);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _userData.Access_token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken1);
 
             var response = await httpc.SendAsync(request);
             var result = await response.Content.ReadAsStringAsync();
@@ -75,7 +83,7 @@ namespace WSService.Services
         public async Task<bool> UpdateProfileAsync(List<string> city)
         {
             string table = "profile"; // or your table name
-            string filter = $"uid=eq.{_userData.Uid}";
+            string filter = $"uid=eq.{uid1}";
             string[] fav = city.ToArray();
             var updateData = new
             {
@@ -84,7 +92,7 @@ namespace WSService.Services
 
             var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"/rest/v1/{table}?{filter}");
             request.Headers.Add("apikey", ApiKey);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _userData.Access_token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken1);
             request.Headers.Add("Prefer", "return=representation");
 
             string json = JsonSerializer.Serialize(updateData);
@@ -109,7 +117,7 @@ namespace WSService.Services
         public async Task<bool> UpdateAlertAsync(string pemail,float temperature,float hum,List<string> city)
         {
             string table = "user_details"; // or your table name
-            string filter = $"uid=eq.{_userData.Uid}";
+            string filter = $"uid=eq.{uid1}";
             string[] fav = city.ToArray();
             var updateData = new
             {
@@ -121,7 +129,7 @@ namespace WSService.Services
 
             var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"/rest/v1/{table}?{filter}");
             request.Headers.Add("apikey", ApiKey);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _userData.Access_token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken1);
             request.Headers.Add("Prefer", "return=representation");
 
             string json = JsonSerializer.Serialize(updateData);

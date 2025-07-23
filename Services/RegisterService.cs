@@ -1,4 +1,5 @@
 ﻿using MFModel.Models;
+using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using WRModel.Models;
 
@@ -9,16 +10,20 @@ namespace RSService.Services
         private readonly HttpClient _http;
         private readonly string _apiKey = "d44e84653bedfb2f9682a4874783732d";
         private readonly RegisterService _registerService;
-        public RegisterService(HttpClient http)
+        private readonly IJSRuntime js;
+        private string accessToken1 = "";
+        private string uid1 = "";
+        public RegisterService(HttpClient http, IJSRuntime jsRuntime)
         {
             _http = http;
-
+            js = jsRuntime;
         }
 
         public async Task<List<MainForecase>> GetForecastAsync(string city, int dayCount)
         {
             var forecastList = new List<MainForecase>();
-
+            accessToken1 = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
+            uid1 = await js.InvokeAsync<string>("sessionStorage.getItem", "uid");
             try
             {
                 string url = $"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={_apiKey}&units=metric";

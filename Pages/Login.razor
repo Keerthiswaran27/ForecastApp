@@ -1,4 +1,7 @@
 ﻿@page "/login"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
 @layout HomeLayout
 @using UDService.Services
 @inject Userdata UDService
@@ -7,7 +10,7 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>Login</PageTitle>
-
+@* 
 <MudPaper Class="login-box mx-auto p-6 rounded-xl shadow-md" Elevation="6">
     <MudText Typo="Typo.h5" Class="txt-title text-center mb-4 " >Login</MudText>
 
@@ -24,10 +27,45 @@
 
     <MudText Typo="Typo.body2" Align="Align.Center">
         Didn't have an account?
-        @* <MudText Link="true" Class="" OnClick="Signup"> Create One</MudText> *@
+        <MudText Link="true" Class="" OnClick="Signup"> Create One</MudText>
         <MudLink Href="/signup" Class="btn11"><span class="acc">Create account</span></MudLink>
     </MudText>
-</MudPaper>
+</MudPaper> *@
+
+<MudContainer MaxWidth="MaxWidth.Medium" Style="margin-top:110px;">
+    <MudPaper Class="container-1 rounded-xl shadow-md" Elevation="6">
+        <MudGrid Gutter="true">
+            <MudItem xs="12" sm="7" md="6">
+                <MudContainer>
+                    <MudImage Src="Images/signin.jpg" Alt="signin" Width="400"></MudImage>
+                </MudContainer>
+            </MudItem>
+            <MudItem xs="12" sm="5" md="6">
+                <MudContainer Style="height:400px;padding-top:20px;">
+                    <MudText Typo="Typo.h5" Class="txt-title text-center mb-5 ">Login</MudText>
+
+                    <MudTextField @bind-Value="email" Label="Email Id" Variant="Variant.Outlined" Placeholder="YourEmail@gmail.com"
+                                  Class="t1 mb-5" />
+
+                    <MudTextField @bind-Value="password" Label="Password" Variant="Variant.Outlined" Placeholder="YourName123*"
+                                  Class="t1 mb-8" InputType="@PasswordInput" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ButtonTestclick" AdornmentAriaLabel="Show Password" />
+
+                    <MudButton Variant="Variant.Filled" OnClick="LoginAsync" Class="btn1 w-full mb-5">
+                        Login
+                    </MudButton>
+
+                    <MudText Typo="Typo.body2" Class=" text-error message1">@message</MudText>
+
+                    <MudText Typo="Typo.body2" Align="Align.Center">
+                        Didn't have an account?
+                        @* <MudText Link="true" Class="" OnClick="Signup"> Create One</MudText> *@
+                        <MudLink Href="/signup" Class="btn11"><span class="acc">Create account</span></MudLink>
+                    </MudText>
+                </MudContainer>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private string email = string.Empty;
@@ -83,6 +121,9 @@
 
 }
 <style>
+    .container-1{
+        padding:20px;
+    }
     .txt-title{
         color: #1A4A4D;
         font-weight:600;
@@ -102,10 +143,8 @@
     .login-box {
         background-color: #ffffff;
         border-radius: 20px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         max-width: 400px;
-        animation: slideUp 0.5s ease-in-out;
-        margin-top:110px;
+        /* animation: slideUp 0.5s ease-in-out; */
     }
 
     slideUp {

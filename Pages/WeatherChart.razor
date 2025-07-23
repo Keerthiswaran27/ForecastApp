@@ -1,0 +1,149 @@
+﻿@page "/humidityanalysis"
+@layout DashboardLayout
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using System.Net.Http.Json
+@using DWModel.Models
+@using WDModel.Models   
+@using MudBlazor
+@using WAService.Services
+@inject WeatherApiService WAService
+@inject HttpClient Http
+@using HService.Services
+@inject HistoryService HService
+
+<MudTextField T="string" Label="City 1" @bind-Value="city" Class="m-2" />
+<MudTextField T="string" Label="City 2" @bind-Value="city2" Class="m-2" />
+<MudButton Variant="Variant.Filled" MudBlazor.Color="MudBlazor.Color.Primary" OnClick="change" Class="m-2">Check</MudButton>
+@if (_series != null && _xAxisLabels != null && _series.All(s => s.Data.Length == _xAxisLabels.Length))
+{
+    <MudPaper Class="p-4 my-4">
+        <MudText Typo="Typo.h6">Humidity Comparison: @city vs @city2</MudText>
+        <MudChart ChartType="ChartType.Line"
+                  ChartSeries="@_series"
+                  XAxisLabels="@_xAxisLabels"
+                  Width="@_width"
+                  Height="@_height"
+                  ChartOptions="@_options"
+                  AxisChartOptions="@_axisChartOptions" />
+    </MudPaper>
+}
+else if (_series != null)
+{
+    <MudText Color="Color.Error">⚠️ Data could not be plotted. Please check your input cities or try again.</MudText>
+}
+
+@code {
+    private string city = string.Empty;
+    private string city2 = string.Empty;
+    private Location result = new();
+    private Location result1 = new();
+
+
+
+
+    private List<ChartSeries>? _series;
+    private string[]? _xAxisLabels;
+
+    private string _width = "700px";
+    private string _height = "500px";  // Taller for better Y axis scale
+
+    private WeatherData? _weatherData = new();
+    private WeatherData? _weatherData1 = new();
+
+
+    private ChartOptions _options = new()
+    {
+        ShowLegend = true,
+        LineStrokeWidth = 2
+    };
+
+    private AxisChartOptions _axisChartOptions = new()
+    {
+        XAxisLabelRotation = 0
+    };
+    private async Task change()
+    {
+        _series = null;
+        _xAxisLabels = null;
+
+        if (string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(city2))
+            return;
+
+        try
+        {
+            // Get coordinates for both cities
+            result = await HService.GetLocationAsync(city);
+            result1 = await HService.GetLocationAsync(city2);
+
+            // Call the humidity API for both cities
+            _weatherData = await WAService.GetHumidityDataAsync(
+                double.Parse(result.Lat), double.Parse(result.Lon),
+                startDate: "2025-06-01", endDate: "2025-06-30");
+
+            _weatherData1 = await WAService.GetHumidityDataAsync(
+                double.Parse(result1.Lat), double.Parse(result1.Lon),
+                startDate: "2025-06-01", endDate: "2025-06-30");
+
+            if (_weatherData?.daily == null || _weatherData1?.daily == null)
+            {
+                Console.WriteLine("API returned null data");
+                return;
+            }
+
+            // Extract humidity and dates
+            var humidity1 = _weatherData.daily.relative_humidity_2m_mean;
+            var humidity2 = _weatherData1.daily.relative_humidity_2m_mean;
+            var dates = _weatherData.daily.time;
+
+            // Sanity check - align list lengths
+            int minCount = new[] { humidity1.Count, humidity2.Count, dates.Count }.Min();
+
+            if (minCount < 2)
+            {
+                _series = null;
+                _xAxisLabels = null;
+                Console.WriteLine("Not enough data to plot");
+                return;
+            }
+
+            humidity1 = humidity1.Take(minCount).ToList();
+            humidity2 = humidity2.Take(minCount).ToList();
+            dates = dates.Take(minCount).Select(dateStr =>
+                 DateTime.TryParse(dateStr, out var dt)
+                    ? dt.ToString("MMM dd")
+                    : dateStr).ToList();
+
+            // Optionally thin labels to avoid overlap
+            var thinnedLabels = new string[minCount];
+            for (int i = 0; i < minCount; i++)
+            {
+                thinnedLabels[i] = i % 5 == 0 ? dates[i] : "";
+            }
+
+            // Set up series
+            _series = new()
+        {
+            new ChartSeries
+            {
+                Name = city,
+                Data = humidity1.Select(h => (double)h).ToArray()
+            },
+            new ChartSeries
+            {
+                Name = city2,
+                Data = humidity2.Select(h => (double)h).ToArray()
+            }
+        };
+
+            _xAxisLabels = thinnedLabels;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            _series = null;
+            _xAxisLabels = null;
+        }
+    }
+
+}

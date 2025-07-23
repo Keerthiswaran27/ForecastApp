@@ -1,9 +1,11 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavManager
-
+@using SigninService.Services
+@inject Loginservice logout
 <MudThemeProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
+<MudPopoverProvider />
 
 <MudLayout>
 
@@ -23,8 +25,10 @@
             <MudIconButton Href="/alerts" Icon="@Icons.Material.Filled.Notifications" Class="text-clr" />
             @* <MudIconButton Href="/settings" Icon="@Icons.Material.Filled.Settings" Class="text-clr" /> *@
             <MudIconButton Href="/history" Icon="@Icons.Material.Filled.History" Class="text-clr" />
+            <MudIconButton Href="/weatheranalysis" Icon="@Icons.Material.Filled.Analytics" Class="text-clr" />
             <MudIconButton Href="/profile" Icon="@Icons.Material.Filled.AccountCircle" Class="text-clr" />
-
+            <MudIconButton onclick="@LogoutAsync" Icon="@Icons.Material.Filled.Logout"  Class="text-clr" />
+            
     </MudToolBar>
 
 </MudAppBar>
@@ -62,13 +66,13 @@
                 }
             </MudNavLink>
 
-            @* <MudNavLink Href="/settings" Class="my-2">
-                <MudIcon Icon="@Icons.Material.Filled.Settings" />
+            <MudNavLink Href="/weatheranalysis" Class="my-2">
+                <MudIcon Icon="@Icons.Material.Filled.Analytics" />
                 @if (_drawerOpen)
                 {
-                    <span class="sb-text ml-2">Settings</span>
+                    <span class="sb-text ml-2">Analysis</span>
                 }
-            </MudNavLink> *@
+            </MudNavLink>
 
             <MudNavLink Href="/history" Class="my-2">
                 <MudIcon Icon="@Icons.Material.Filled.History" />
@@ -84,6 +88,13 @@
                     <span class="sb-text ml-2">Profile</span>
                 }
             </MudNavLink>
+            @* <MudNavLink Href="/geminichat" Class="my-2">
+                <MudIcon Icon="@Icons.Custom.Brands.Google" />
+                @if (_drawerOpen)
+                {
+                    <span class="sb-text ml-2">Chat</span>
+                }
+            </MudNavLink> *@
         </MudNavMenu>
 
     </MudDrawer>
@@ -101,6 +112,10 @@
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
+    }
+    private async Task LogoutAsync()
+    {
+        await logout.SignOutAsync();
     }
 }
 <style>

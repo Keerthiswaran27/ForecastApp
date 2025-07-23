@@ -1,0 +1,34 @@
+﻿@page "/geminichat"
+@layout DashboardLayout
+@using GSService.Services
+@inject GeminiService Gemini
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-6">
+    <MudText Typo="Typo.h4" Align="Align.Center">Gemini Chat</MudText>
+
+    <MudTextField T="string" @bind-Value="userInput" Label="Ask Gemini" FullWidth="true" />
+
+    <MudButton OnClick="CallGemini" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Ask</MudButton>
+
+    <MudPaper Class="mt-4 p-3">
+        <MudText Typo="Typo.body1">@geminiResponse</MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string userInput = "";
+    private string geminiResponse = "";
+
+    private async Task CallGemini()
+    {
+        if (string.IsNullOrWhiteSpace(userInput))
+        {
+            geminiResponse = "Please enter a question.";
+            return;
+        }
+
+        geminiResponse = "Loading...";
+        geminiResponse = await Gemini.GetGeminiResponse(userInput);
+    }
+}

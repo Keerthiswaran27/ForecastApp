@@ -1,0 +1,647 @@
+﻿@page "/weatheranalysis"
+@layout DashboardLayout
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using System.Net.Http.Json
+@using DWModel.Models
+@using WDModel.Models
+@using MudBlazor
+@using WAService.Services
+@inject WeatherApiService WAService
+@inject HttpClient Http
+@using HService.Services
+@inject HistoryService HService
+@using GSService.Services
+@inject GeminiService Gemini
+
+<PageTitle>Weather Analysis</PageTitle>
+
+@* <MudTextField T="string" Label="City 1" @bind-Value="city" Class="m-2" />
+<MudTextField T="string" Label="City 2" @bind-Value="city2" Class="m-2" />
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="change" Class="m-2">Check</MudButton> *@
+<MudContainer Style="padding-bottom:40px;padding-top:40px;background-color: #D1E7E8;width:100%">
+    <MudGrid Gutter="true">
+        <MudItem md="8">
+            <MudContainer Class="input-paper">
+                <MudGrid Gutter="true">
+                    <MudItem md="6">
+                        <MudContainer>
+                            <MudTextField T="string" Label="City 1" @bind-Value="city" Variant="Variant.Filled" Class="email-inputbox" /> 
+                        </MudContainer>
+                    </MudItem>
+                    <MudItem md="6">
+                        <MudContainer>
+                            <MudTextField T="string" Label="City 2" @bind-Value="city2" Variant="Variant.Filled" Class="email-inputbox"/>
+                        </MudContainer>
+                    </MudItem>
+                    <MudItem md="12">
+                        <MudContainer>
+                            <MudButton Variant="Variant.Filled"  OnClick="change" FullWidth="true" Class="btn-1">analyse</MudButton>
+                        </MudContainer>
+                    </MudItem>
+                </MudGrid>
+            </MudContainer>
+        </MudItem>
+        <MudItem md="4">
+            <MudContainer>
+                <MudText Typo="Typo.h3" Class="title-text text-center mt-0">CITIES ANALYSIS</MudText>
+            </MudContainer>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+<MudPaper Style="background-color:#1A4A4D;height:1px;margin-bottom:20px;"></MudPaper>
+
+@if(status ==1)
+{
+
+    <MudContainer>
+        <MudContainer>
+            <MudText Typo="Typo.h4" Align="Align.Center">Temperature Comparison: @city vs @city2</MudText>
+            <br/>
+            <MudGrid Gutter="true" >
+                <MudItem md="8">
+                    @if (_series != null && _xAxisLabels != null && _series.All(s => s.Data.Length == _xAxisLabels.Length))
+                    {
+                        <MudContainer>
+
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@_series"
+                                      XAxisLabels="@_xAxisLabels"
+                                      Width="@_width"
+                                      Height="@_height"
+                                      ChartOptions="@_options"
+                                      AxisChartOptions="@_axisChartOptions" Style="background-color:black;border-radius:22px;padding:5px;" />
+                        </MudContainer>
+                    }
+                    else if (_series != null)
+                    {
+                        <MudText Color="Color.Error">⚠️ Data could not be plotted. Please check your input cities or try again.</MudText>
+                    }
+                </MudItem>
+                <MudItem md="4">
+                    <MudPaper Class="paper-2" Style="padding:16px;">
+                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-2 mt-2">Temperature Analysis</MudText>
+                        @foreach (var item in HumidityPoints1)
+                        {
+                            <MudText Class="mb-2">
+                                🎯
+                                @item
+                            </MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+        <br/>
+        <br/>
+    </MudContainer>
+    <MudPaper Style="background-color:#1A4A4D;height:1px;"></MudPaper>
+    <MudContainer Style="background-color:#D1E7E8;width:100%">
+        <br/>
+        
+
+        <MudContainer >
+            <MudText Typo="Typo.h4" Align="Align.Center">Humidity Comparison: @city vs @city2</MudText>
+            <br/>
+            <MudGrid Gutter="true">
+                <MudItem md="4">
+                    <MudPaper Class="paper-2">
+                        <MudText Typo="Typo.h5" Class="mb-3 mt-2" Align="Align.Center">Humidity Analysis</MudText>
+                       
+                            @foreach(var item in HumidityPoints)
+                            {
+                            <MudText Class="mb-2">🎯 @item</MudText>
+                            }
+                        
+                    </MudPaper>
+                </MudItem>
+                <MudItem md="8">
+                    @if (_series1 != null && _xAxisLabels1 != null && _series1.All(s => s.Data.Length == _xAxisLabels1.Length))
+                    {
+                        <MudContainer>
+
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@_series1"
+                                      XAxisLabels="@_xAxisLabels1"
+                                      Width="@_width1"
+                                      Height="@_height1"
+                                      ChartOptions="@_options1"
+                                      AxisChartOptions="@_axisChartOptions1" Style="background-color:black;border-radius:22px;padding:5px;" />
+                        </MudContainer>
+                    }
+                    else if (_series1 != null)
+                    {
+                        <MudText Color="Color.Error">⚠️ Data could not be plotted. Please check your input cities or try again.</MudText>
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+        <br/>
+        <br/>
+    </MudContainer>
+}
+else if(status == 2)
+{
+    <MudContainer Class="container-0 object-center">
+        <MudProgressCircular Indeterminate="true" Size="Size.Large" Style="color:#1A4A4D;" />
+    </MudContainer>
+}
+else
+{
+    <MudContainer>
+        <MudPaper>
+            <MudText>please enter the city</MudText>
+        </MudPaper>
+    </MudContainer>
+}
+@code {
+    private string city = "bangalore";
+    private string city2 = "chennai";
+    private string result = string.Empty;
+    private int status = 0;
+    private string result1 = string.Empty;
+
+    private List<DailyWeather> city1Weather = new();
+    private List<DailyWeather> city1Weather1 = new();
+
+    private List<double> temp1 = new();
+    private List<double> temp2 = new();
+
+    private List<ChartSeries>? _series;
+    private string[]? _xAxisLabels;
+    private Location result2 = new();
+    private Location result3 = new();
+    private List<ChartSeries>? _series1;
+    private string[]? _xAxisLabels1;
+
+    private string _width1 = "650px";
+    private string _height1 = "400px";  // Taller for better Y axis scale
+
+    private WeatherData? _weatherData = new();
+    private WeatherData? _weatherData1 = new();
+
+    private string _width = "650px";
+    private string _height = "400px";  // Taller for better Y axis scale
+    private List<string> HumidityPoints { get; set; } = new();
+    private List<string> HumidityPoints1 { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await change();
+    }
+    private double City1AvgHumidity =>
+    _weatherData?.daily?.relative_humidity_2m_mean?.Any() == true
+    ? Math.Round(_weatherData.daily.relative_humidity_2m_mean.Average(), 1)
+    : 0;
+
+    private double City2AvgHumidity =>
+        _weatherData1?.daily?.relative_humidity_2m_mean?.Any() == true
+        ? Math.Round(_weatherData1.daily.relative_humidity_2m_mean.Average(), 1)
+        : 0;
+
+    private string OverallComparisonSentence
+    {
+        get
+        {
+            if (City1AvgHumidity > City2AvgHumidity + 3)
+                return $"{city} was generally more humid than {city2}.";
+            if (City2AvgHumidity > City1AvgHumidity + 3)
+                return $"{city2} was generally more humid than {city}.";
+            return $"both cities had similar overall humidity levels.";
+        }
+    }
+    private string geminiResponse = "";
+    private string userInput ="";  
+    private string City1TrendSentence =>
+        DescribeTrend(_weatherData?.daily?.relative_humidity_2m_mean ?? new List<double>());
+
+    private string City2TrendSentence =>
+        DescribeTrend(_weatherData1?.daily?.relative_humidity_2m_mean ?? new List<double>());
+
+    private ChartOptions _options = new()
+    {
+        ShowLegend = true,
+        LineStrokeWidth = 2
+    };
+
+    private AxisChartOptions _axisChartOptions = new()
+    {
+        XAxisLabelRotation = 0
+    };
+    private string geminiResponse1="";
+    private async Task change()
+    {
+        status = 2;
+        city1Weather.Clear();
+        city1Weather1.Clear();
+        temp1.Clear();
+        temp2.Clear();
+        _series = null;
+        _xAxisLabels = null;
+        if (string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(city2))
+            return;
+
+        try
+        {
+            result = await HService.GetStationIdAsync(city);
+            result1 = await HService.GetStationIdAsync(city2);
+
+            city1Weather = await HService.GetMonthlyWeatherAsync(result, "2025-05-01", "2025-05-31") ?? new();
+            city1Weather1 = await HService.GetMonthlyWeatherAsync(result1, "2025-05-01", "2025-05-31") ?? new();
+            string a = "";
+            string b = "";
+            foreach(var item in city1Weather)
+            {
+                a = a + $"{item.Tavg},";
+            }
+            foreach(var item in city1Weather1)
+            {
+                b = b + $"{item.Tavg},";
+            }
+            //userInput = $"Act as a weather analyst. Write a clear, modern, 4–6 point summary comparing the past month's daily average temperatures for two cities. The response must ONLY be in bullet points (no intro sentence). Include:- Each city's average temperature in °C (rounded to 1 decimal).- Temperature trend in each city (rising, falling, stable).- Which city was hotter overall.- One or two insights or implications (short, professional, modern).City 1: {city}City 1 temperatures: {a}City 2: {city2}City 2 temperatures: {b}";
+            userInput = $"Act as a smart weather analyst.\n\nGenerate a concise, well-worded summary comparing the past month's daily average temperatures for two cities. Make it 6-8 lines long, polished, and suitable for a weather dashboard UI card.\n\nInclude:\n- Each city’s average temperature in °C (rounded to 1 decimal).\n- Temperature trend in each city (rising, falling, or stable).\n- Which city was overall hotter.\n- One line of insight or implication if relevant.\n\nAvoid listing all numbers—just summarize patterns like a modern climate analyst.\nAvoid the Intro part\nMake each sentence split into separate paragraph\nCity 1: {city}\nCity 1 temperatures: [{a}]\n\nCity 2: {city2}\nCity 2 temperatures: [{b}]";
+            geminiResponse = await Gemini.GetGeminiResponse(userInput);
+            if (string.IsNullOrWhiteSpace(geminiResponse))
+            {
+                HumidityPoints1 = new();
+                return;
+            }
+
+            HumidityPoints1 = geminiResponse
+                .Split('\n')
+                .Skip(1)  // Skip the intro line
+                .Select(line => line.TrimStart('*', ' ').Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
+            geminiResponse = "\t" + geminiResponse;
+            var city1Valid = city1Weather.Where(d => d.Tavg != 0).ToList();
+            var city2Valid = city1Weather1.Where(d => d.Tavg != 0).ToList();
+
+            temp1 = city1Valid.Select(d => Math.Round(d.Tavg)).ToList();
+            temp2 = city2Valid.Select(d => Math.Round(d.Tavg)).ToList();
+            var dateLabels = city1Valid.Select(d => d.Date.ToString("MMM d")).ToList();
+
+            int minCount = new[] { temp1.Count, temp2.Count, dateLabels.Count }.Min();
+
+            if (minCount < 2)
+            {
+                _series = null;
+                _xAxisLabels = null;
+                return;
+            }
+
+            temp1 = temp1.Take(minCount).ToList();
+            temp2 = temp2.Take(minCount).ToList();
+            dateLabels = dateLabels.Take(minCount).ToList();
+
+            // Thinning the X-axis labels so they don't overlap
+            var thinnedLabels = new string[minCount];
+            for (int i = 0; i < minCount; i++)
+            {
+                if (i % 5 == 0)
+                    thinnedLabels[i] = dateLabels[i];
+                else
+                    thinnedLabels[i] = ""; // blank for spacing
+            }
+
+            _series = new()
+        {
+            new ChartSeries
+            {
+                Name = city,
+                Data = temp1.ToArray()
+            },
+            new ChartSeries
+            {
+                Name = city2,
+                Data = temp2.ToArray()
+            }
+        };
+
+            _xAxisLabels = thinnedLabels;
+            await change1();
+            status = 1;
+        }
+        catch (Exception ex)
+        {
+            _series = null;
+            _xAxisLabels = null;
+        }
+    }// Average of Tavg for each city
+    private double CityOneAvgTemp => city1Weather.Any() ? Math.Round(city1Weather.Average(d => d.Tavg), 1) : 0;
+    private double CityTwoAvgTemp => city1Weather1.Any() ? Math.Round(city1Weather1.Average(d => d.Tavg), 1) : 0;
+
+    private double CityOneMinTemp => city1Weather.Any() ? Math.Round(city1Weather.Min(d => d.Tmin), 1) : 0;
+    private double CityTwoMinTemp => city1Weather1.Any() ? Math.Round(city1Weather1.Min(d => d.Tmin), 1) : 0;
+
+    private double CityOneMaxTemp => city1Weather.Any() ? Math.Round(city1Weather.Max(d => d.Tmax), 1) : 0;
+    private double CityTwoMaxTemp => city1Weather1.Any() ? Math.Round(city1Weather1.Max(d => d.Tmax), 1) : 0;
+
+    private double CityOneWind => city1Weather.Any() ? Math.Round(city1Weather.Average(d => d.Wspd), 1) : 0;
+    private double CityTwoWind => city1Weather1.Any() ? Math.Round(city1Weather1.Average(d => d.Wspd), 1) : 0;
+
+    private double CityOnePressure => city1Weather.Any() ? Math.Round(city1Weather.Average(d => d.Pres), 1) : 0;
+    private double CityTwoPressure => city1Weather1.Any() ? Math.Round(city1Weather1.Average(d => d.Pres), 1) : 0;
+
+    private double CityOnePrecip => city1Weather.Any() ? Math.Round(city1Weather.Average(d => d.Prcp), 1) : 0;
+    private double CityTwoPrecip => city1Weather1.Any() ? Math.Round(city1Weather1.Average(d => d.Prcp), 1) : 0;
+
+    private double City1AvgTemp => city1Weather.Any()
+        ? Math.Round(city1Weather.Average(d => d.Tavg), 1)
+        : 0;
+
+    private double City2AvgTemp => city1Weather1.Any()
+        ? Math.Round(city1Weather1.Average(d => d.Tavg), 1)
+        : 0;
+
+    // Average daily range (Tmax - Tmin)
+    private double City1AvgRange => city1Weather.Any()
+        ? Math.Round(city1Weather.Average(d => d.Tmax - d.Tmin), 1)
+        : 0;
+
+    private double City2AvgRange => city1Weather1.Any()
+        ? Math.Round(city1Weather1.Average(d => d.Tmax - d.Tmin), 1)
+        : 0;
+
+    // Comparison sentence
+    private string TemperatureComparisonSentence
+    {
+        get
+        {
+            if (City1AvgTemp > City2AvgTemp + 1.5)
+                return $"{city} was generally hotter than {city2}.";
+            if (City2AvgTemp > City1AvgTemp + 1.5)
+                return $"{city2} was generally hotter than {city}.";
+            return $"both cities had similar overall temperatures.";
+        }
+    }
+
+    // Trend analysis
+    private string City1TempTrendSentence =>
+        DescribeTempTrend(city1Weather.Select(d => d.Tavg).ToList());
+
+    private string City2TempTrendSentence =>
+        DescribeTempTrend(city1Weather1.Select(d => d.Tavg).ToList());
+
+    private string DescribeTempTrend(List<double> values)
+    {
+        if (values.Count < 2) return "insufficient data for trend analysis.";
+
+        var first = values.First();
+        var last = values.Last();
+        var diff = last - first;
+
+        if (Math.Abs(diff) < 1)
+            return "relatively stable temperatures over the period";
+
+        if (diff > 1)
+            return "a gradual increase in temperature over the period";
+
+        return "a gradual decrease in temperature over the period";
+    }
+
+    private ChartOptions _options1 = new()
+    {
+        ShowLegend = true,
+        LineStrokeWidth = 2
+    };
+
+    private AxisChartOptions _axisChartOptions1 = new()
+    {
+        XAxisLabelRotation = 0
+    };
+    private void ProcessHumidityResponse(string response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            HumidityPoints = new();
+            return;
+        }
+
+        HumidityPoints = response
+            .Split('\n')
+            .Skip(1)  // Skip the intro line
+            .Select(line => line.TrimStart('*', ' ').Trim())
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToList();
+    }
+
+    private async Task change1()
+    {
+        _weatherData = null;
+        _weatherData1 = null;
+        result2 = null;
+        result3 = null;
+        _series1 = null;
+        _xAxisLabels1 = null;
+
+        if (string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(city2))
+            return;
+
+        try
+        {
+            // Get coordinates for both cities
+            result2 = await HService.GetLocationAsync(city);
+            result3 = await HService.GetLocationAsync(city2);
+
+            // Call the humidity API for both cities
+            _weatherData = await WAService.GetHumidityDataAsync(
+                double.Parse(result2.Lat), double.Parse(result2.Lon),
+                startDate: "2025-06-01", endDate: "2025-06-30");
+
+            _weatherData1 = await WAService.GetHumidityDataAsync(
+                double.Parse(result3.Lat), double.Parse(result3.Lon),
+                startDate: "2025-06-01", endDate: "2025-06-30");
+
+            if (_weatherData?.daily == null || _weatherData1?.daily == null)
+            {
+                Console.WriteLine("API returned null data");
+                return;
+            }
+            string Hum1 = "";
+            string Hum2 = "";
+            foreach(var item in _weatherData.daily.relative_humidity_2m_mean)
+            {
+                Hum1 += $"{item},";
+            }
+            foreach(var item in _weatherData1.daily.relative_humidity_2m_mean)
+            {
+                Hum2 += $"{item},";
+            }
+            string huminput = $"Act as a smart weather analyst.Generate a concise, well-worded summary comparing the past month's daily average humidity levels for two cities. Make it 6-8 lines long, polished, and suitable for a weather dashboard UI card.Include- Each city’s average humidity in % (rounded to 1 decimal).- Humidity trend in each city (rising, falling, or stable)- Which city was overall more humid.- One line of insight or implication if relevant.Avoid listing all numbers—just summarize patterns like a modern climate analyst.  Avoid the Intro part.Make it in points.City 1: {city}City 1 humidity values: [{Hum1}]City 2: {city2}City 2 humidity values: [{Hum2}]";
+            // Extract humidity and dates
+            geminiResponse1 = await Gemini.GetGeminiResponse(huminput);
+            ProcessHumidityResponse(geminiResponse1);
+            var humidity1 = _weatherData.daily.relative_humidity_2m_mean;
+            var humidity2 = _weatherData1.daily.relative_humidity_2m_mean;
+            var dates = _weatherData.daily.time;
+
+            // Sanity check - align list lengths
+            int minCount = new[] { humidity1.Count, humidity2.Count, dates.Count }.Min();
+
+            if (minCount < 2)
+            {
+                _series1 = null;
+                _xAxisLabels1 = null;
+                Console.WriteLine("Not enough data to plot");
+                return;
+            }
+
+            humidity1 = humidity1.Take(minCount).ToList();
+            humidity2 = humidity2.Take(minCount).ToList();
+            dates = dates.Take(minCount).Select(dateStr =>
+                 DateTime.TryParse(dateStr, out var dt)
+                    ? dt.ToString("MMM dd")
+                    : dateStr).ToList();
+
+            // Optionally thin labels to avoid overlap
+            var thinnedLabels = new string[minCount];
+            for (int i = 0; i < minCount; i++)
+            {
+                thinnedLabels[i] = i % 5 == 0 ? dates[i] : "";
+            }
+
+            _series1 = new()
+            {
+                new ChartSeries
+                {
+                    Name = city,
+                    Data = humidity1.Select(h => (double)h).ToArray()
+                },
+                new ChartSeries
+                {
+                    Name = city2,
+                    Data = humidity2.Select(h => (double)h).ToArray()
+                }
+            };
+
+            _xAxisLabels1 = thinnedLabels;
+
+
+            _xAxisLabels1 = thinnedLabels;
+            status = 1;
+        }
+        catch (Exception ex)
+        {
+            _series1 = null;
+            _xAxisLabels1 = null;
+        }
+    }
+    private string HumidityAnalysisText
+    {
+        get
+        {
+            if (_weatherData == null || _weatherData1 == null
+                || _weatherData.daily?.relative_humidity_2m_mean == null
+                || _weatherData1.daily?.relative_humidity_2m_mean == null)
+                return "No humidity data available for analysis.";
+
+            var hum1 = _weatherData.daily.relative_humidity_2m_mean;
+            var hum2 = _weatherData1.daily.relative_humidity_2m_mean;
+
+            if (hum1.Count < 2 || hum2.Count < 2)
+                return "Not enough data to analyze trends.";
+
+            double avg1 = Math.Round(hum1.Average(), 1);
+            double avg2 = Math.Round(hum2.Average(), 1);
+
+            string comparison;
+            if (avg1 > avg2 + 3)
+                comparison = $"{city} was generally more humid compared to {city2}.";
+            else if (avg2 > avg1 + 3)
+                comparison = $"{city2} was generally more humid compared to {city}.";
+            else
+                comparison = $"both cities had similar humidity levels.";
+
+            string trend1 = DescribeTrend(hum1);
+            string trend2 = DescribeTrend(hum2);
+
+            return $"During the observed period, {city} recorded an average humidity of around {avg1}% while {city2} had about {avg2}%. " +
+                   $"Overall, {comparison} " +
+                   $"The humidity trend in {city} showed {trend1}, whereas {city2} experienced {trend2}.";
+        }
+    }
+
+    private string DescribeTrend(List<double> values)
+    {
+        if (values.Count < 2) return "insufficient data";
+
+        var first = values.First();
+        var last = values.Last();
+        var diff = last - first;
+
+        if (Math.Abs(diff) < 2)
+            return "relatively stable humidity";
+
+        if (diff > 2)
+            return "a gradual increase in humidity";
+
+        return "a gradual decrease in humidity";
+    }
+
+
+} 
+<style>
+    .container-0 {
+        height: 400px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        color:red;
+    }
+    body{
+        background-color: rgba(142, 185, 188,0.9) ;
+    }
+    .paper-2{
+        background-color:aliceblue;
+        width:100%;
+        height:100%;
+        border-radius:22px;
+        padding:15px;
+    }
+    .input-paper{
+        border-radius:22px;
+        padding:20px;
+    }
+    .mud-input.mud-input-filled {
+        background-color: aliceblue;
+        border-radius: 20px;
+    }
+
+    }
+
+    .mud-input.mud-input-filled :hover {
+        background-color: azure;
+        border-radius: 20px;
+    }
+
+    .mud-input-root,
+    .mud-input-filled,
+    .mud-input-slot {
+        border-radius: 20px !important;
+        overflow: hidden;
+    }
+
+    .email-inputbox {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 16px;
+    }
+
+    .btn-1 {
+        border-radius: 20px;
+        background-color: #2C6669;
+        color: aliceblue;
+    }
+
+        .btn-1:hover {
+            background-color: #1A4A4D;
+        }
+    .list-paper{
+        margin-top:0;
+        margin-bottom:0;
+        padding-top:0;
+        padding-bottom:0;
+    }
+</style>

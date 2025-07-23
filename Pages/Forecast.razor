@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
 @layout HomeLayout
 @using MudBlazor
 @using System
@@ -11,14 +13,14 @@
 @using ForecastApp.Dialogs
 
 
-
 <PageTitle>Weather</PageTitle>
 
-<MudAppBar Fixed="false"  Elevation="1" Style="margin-top:auto;border-radius:0px;background-color:#1A4A4D">
-        <MudText Typo="Typo.h5" Class="ml-3" >WEATHER APP</MudText>
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+<MudAppBar Fixed="false" Elevation="1" Style="border-radius:0px;background-color:#1A4A4D">
+    <MudText Typo="Typo.h5" Class="ml-3">WEATHER APP</MudText>
+    <MudSpacer />
+    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
 </MudAppBar>
+
 <section style="height: 400px; background-color:#D1E7E8; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
     <MudText Typo="Typo.h1" Class="txt-clr text-pink  mb-2" Style="font-size: 7rem; font-weight: bold;">
         WEATHER BLOOM
@@ -30,13 +32,11 @@
     <MudButton Class="btn-clear" @onclick="gotologin" Style="padding:10px">  Get started  </MudButton>
 </section>
 
-
-<body Style="background-color: #D1E7E8;">
 @if (weatherstart)
 {
-    <br/>
+   
 
-    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+    <MudContainer MaxWidth="MaxWidth.Medium">
 
         @* <MudText Typo="Typo.h5" Align="Align.Center" Class="my-2">Welcome to Weather App</MudText> *@
         @* <MudText Typo="Typo.h6" Align="Align.Center">Search City</MudText> *@
@@ -193,7 +193,7 @@ else{
     <br>
     <br>
 }
-</body>
+
 
 @code {
     private string backgroundStyle = "background: linear-gradient(to bottom,rgba(255, 255, 255, 0.7) 0%,#f8bbd0 20%,#f48fb1 50%,#ec407a 100%);border-radius: 16px;";
@@ -442,5 +442,7 @@ else{
         margin-bottom: 10px;
         border-radius: 16px;
     }
-    
+    body{
+        background-color:#D1E7E8;
+    }
 </style>

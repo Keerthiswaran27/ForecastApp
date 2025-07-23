@@ -1,0 +1,167 @@
+﻿@page "/analysis"
+@layout DashboardLayout
+@using System.Net.Http.Json
+@using DWModel.Models
+@using WDModel.Models
+@using MudBlazor
+@using WAService.Services
+@inject WeatherApiService WAService
+@inject HttpClient Http
+@using HService.Services
+@inject HistoryService HService
+
+
+<PageTitle>Analysis</PageTitle>
+
+<MudTextField T="string" Label="City 1" @bind-Value="city" Class="m-2" />
+<MudTextField T="string" Label="City 2" @bind-Value="city2" Class="m-2" />
+<MudButton Variant="Variant.Filled" MudBlazor.Color="MudBlazor.Color.Primary" OnClick="change" Class="m-2">Check</MudButton>
+
+@if (_tempSeries != null && _tempXAxisLabels != null && _tempSeries.All(s => s.Data.Length == _tempXAxisLabels.Length))
+{
+    <MudPaper Class="p-4 my-4">
+        <MudText Typo="Typo.h6">Temperature Comparison: @city vs @city2</MudText>
+        <MudChart ChartType="ChartType.Line"
+                  ChartSeries="@_tempSeries"
+                  XAxisLabels="@_tempXAxisLabels"
+                  Width="@_width"
+                  Height="@_height"
+                  ChartOptions="@_options"
+                  AxisChartOptions="@_axisChartOptions" />
+    </MudPaper>
+}
+
+@if (_humiditySeries != null && _humidityXAxisLabels != null && _humiditySeries.All(s => s.Data.Length == _humidityXAxisLabels.Length))
+{
+    <MudPaper Class="p-4 my-4">
+        <MudText Typo="Typo.h6">Humidity Comparison: @city vs @city2</MudText>
+        <MudChart ChartType="ChartType.Line"
+                  ChartSeries="@_humiditySeries"
+                  XAxisLabels="@_humidityXAxisLabels"
+                  Width="@_width"
+                  Height="@_height"
+                  ChartOptions="@_options"
+                  AxisChartOptions="@_axisChartOptions" />
+    </MudPaper>
+}
+
+
+@code{
+    // Inputs
+    private string city = string.Empty;
+    private string city2 = string.Empty;
+
+    // Temperature chart
+    private List<ChartSeries>? _tempSeries;
+    private string[]? _tempXAxisLabels;
+
+    // Humidity chart
+    private List<ChartSeries>? _humiditySeries;
+    private string[]? _humidityXAxisLabels;
+
+    // Chart options
+    private string _width = "700px";
+    private string _height = "500px";
+
+    private ChartOptions _options = new() { ShowLegend = true, LineStrokeWidth = 2 };
+    private AxisChartOptions _axisChartOptions = new() { XAxisLabelRotation = 0 };
+    private async Task change()
+    {
+        // Clear old data
+        _tempSeries = null;
+        _tempXAxisLabels = null;
+        _humiditySeries = null;
+        _humidityXAxisLabels = null;
+
+        if (string.IsNullOrWhiteSpace(city) || string.IsNullOrWhiteSpace(city2))
+            return;
+
+        try
+        {
+            // Get lat/lon for both cities
+            var loc1 = await HService.GetLocationAsync(city);
+            var loc2 = await HService.GetLocationAsync(city2);
+
+            // Dates for humidity API (last 30 days)
+            var startDate = DateTime.UtcNow.AddDays(-30).ToString("yyyy-MM-dd");
+            var endDate = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-dd");
+
+            // Get temperature data
+            var stationId1 = await HService.GetStationIdAsync(city);
+            var stationId2 = await HService.GetStationIdAsync(city2);
+
+            var tempData1 = await HService.GetMonthlyWeatherAsync(stationId1, "2025-05-01", "2025-05-31") ?? new();
+            var tempData2 = await HService.GetMonthlyWeatherAsync(stationId2, "2025-05-01", "2025-05-31") ?? new();
+
+            var tempValid1 = tempData1.Where(d => d.Tavg != 0).ToList();
+            var tempValid2 = tempData2.Where(d => d.Tavg != 0).ToList();
+
+            var temp1 = tempValid1.Select(d => Math.Round(d.Tavg)).ToList();
+            var temp2 = tempValid2.Select(d => Math.Round(d.Tavg)).ToList();
+            var tempDates = tempValid1.Select(d => d.Date.ToString("MMM dd")).ToList();
+
+            int tempMinCount = new[] { temp1.Count, temp2.Count, tempDates.Count }.Min();
+            if (tempMinCount >= 2)
+            {
+                temp1 = temp1.Take(tempMinCount).ToList();
+                temp2 = temp2.Take(tempMinCount).ToList();
+                tempDates = tempDates.Take(tempMinCount).ToList();
+
+                var tempLabels = new string[tempMinCount];
+                for (int i = 0; i < tempMinCount; i++)
+                    tempLabels[i] = i % 5 == 0 ? tempDates[i] : "";
+
+                _tempSeries = new()
+            {
+                new ChartSeries { Name = city, Data = temp1.ToArray() },
+                new ChartSeries { Name = city2, Data = temp2.ToArray() }
+            };
+                _tempXAxisLabels = tempLabels;
+            }
+
+            // Get humidity data
+            var humidityData1 = await WAService.GetHumidityDataAsync(
+                double.Parse(loc1.Lat), double.Parse(loc1.Lon), startDate, endDate);
+
+            var humidityData2 = await WAService.GetHumidityDataAsync(
+                double.Parse(loc2.Lat), double.Parse(loc2.Lon), startDate, endDate);
+
+            if (humidityData1?.daily != null && humidityData2?.daily != null)
+            {
+                var humidity1 = humidityData1.daily.relative_humidity_2m_mean;
+                var humidity2 = humidityData2.daily.relative_humidity_2m_mean;
+                var humDates = humidityData1.daily.time;
+
+                int humMinCount = new[] { humidity1.Count, humidity2.Count, humDates.Count }.Min();
+                if (humMinCount >= 2)
+                {
+                    humidity1 = humidity1.Take(humMinCount).ToList();
+                    humidity2 = humidity2.Take(humMinCount).ToList();
+                    humDates = humDates.Take(humMinCount).Select(dateStr =>
+                         DateTime.TryParse(dateStr, out var dt) ? dt.ToString("MMM dd") : dateStr
+                    ).ToList();
+
+                    var humLabels = new string[humMinCount];
+                    for (int i = 0; i < humMinCount; i++)
+                        humLabels[i] = i % 5 == 0 ? humDates[i] : "";
+
+                    _humiditySeries = new()
+                {
+                    new ChartSeries { Name = city, Data = humidity1.ToArray() },
+                    new ChartSeries { Name = city2, Data = humidity2.ToArray() }
+                };
+                    _humidityXAxisLabels = humLabels;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            _tempSeries = null;
+            _tempXAxisLabels = null;
+            _humiditySeries = null;
+            _humidityXAxisLabels = null;
+        }
+    }
+
+}

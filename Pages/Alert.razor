@@ -99,6 +99,7 @@
     private float temperature;
     private bool condition = true;
     private float humidity ;
+    private string[] alert_city = new string[15];
     public class CitySelection
     {
         public string? CityName { get; set; }
@@ -106,6 +107,7 @@
     }
     private ProfileDetails profile = new();
     private List<string> place = new();
+    private List<string> place1 = new();
     private List<CitySelection> citySelections = new();
     private void AddCity(string city, bool check)
     {
@@ -144,21 +146,21 @@
                 }
             }
         }
-        foreach(var a in place)
-        {
-            Console.WriteLine(a);
-        }
-        foreach (var c in citySelections)
-        {
-            Console.WriteLine($" {c.CityName} {c.IsSelected}");
-        }
+        // foreach(var a in place)
+        // {
+        //     Console.WriteLine(a);
+        // }
+        // foreach (var c in citySelections)
+        // {
+        //     Console.WriteLine($" {c.CityName} {c.IsSelected}");
+        // }
 
     }
     private bool AlertCity(string city)
     {
-        var cities1 = profile.Cities;
-        return cities1.Contains(city);
+        return profile?.Cities?.Contains(city) ?? false;
     }
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -167,22 +169,28 @@
             email = profile.Email;
             temperature = profile.Temp;
             humidity = profile.Humidity;
-            var favCities = await WSService.GetFavouritesAsync(); // returns List<string>
-            foreach (var c in favCities)
+            alert_city = profile.Cities;
+            place1 = alert_city.ToList();
+            if(email!=null && temperature!=0 && humidity!=0 && alert_city.Length>0)
             {
-                Console.WriteLine(c);
+                await ENService.SendWeatherAlertAsync(email, temperature, humidity, place1);
             }
+            var favCities = await WSService.GetFavouritesAsync(); // returns List<string>
+            // foreach (var c in favCities)
+            // {
+            //     Console.WriteLine(c);
+            // }
             citySelections = favCities.Select(city => new CitySelection
             {
                 CityName = city,
                 IsSelected = false
             }).ToList();
 
-            Console.WriteLine("Fetched cities: " + string.Join(", ", favCities));
-            foreach (var c in citySelections)
-            {
-                Console.WriteLine($"{c.CityName} and {c.IsSelected}");
-            }
+            // Console.WriteLine("Fetched cities: " + string.Join(", ", favCities));
+            // foreach (var c in citySelections)
+            // {
+            //     Console.WriteLine($"{c.CityName} and {c.IsSelected}");
+            // }
             
         }
         catch (Exception ex)

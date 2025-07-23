@@ -1,5 +1,7 @@
 ﻿@page "/history"
 @layout DashboardLayout
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using HService.Services
 @inject HistoryService HService
 @using HDModel.Models
@@ -7,48 +9,61 @@
 <PageTitle>History</PageTitle>
 <br/>
 <MudText Typo="Typo.h3" Class="ml-6">Weather Search History</MudText>
-@if(Found){
-    @if(history != null && history.Count>0 )
+
+@if(data_condition)
+{
+    @if (Found)
     {
-        <MudContainer Class="container-1">
-            <MudPaper Class="paper-1 p-4">
+        @if (history != null && history.Count > 0)
+        {
+            <MudContainer Class="container-1">
+                <MudPaper Class="paper-1 p-4">
 
-                <MudGrid Gutter="true" Class="mb-3">
-                    <MudItem md="6">
-                        <MudText Typo="Typo.h5" Class="mb-2">Search History</MudText>
-                    </MudItem>
-                    <MudItem md="6" Style="display:flex;flex-direction:row;justify-content:end">
-                        <MudButton @onclick="delete" Variant="Variant.Filled" Class="btn-1">clear history</MudButton>
-                    </MudItem>
-                </MudGrid>
-            
-                <div style="overflow-x:auto;">
-                    <MudTable Items="@history" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
-                        <HeaderContent>
-                            <MudTh>City</MudTh>
-                            <MudTh>Temperature (°C)</MudTh>
-                            <MudTh>Humidity (%)</MudTh>
-                            <MudTh>Wind Speed (km/h)</MudTh>
-                            <MudTh>Condition</MudTh>
-                            <MudTh>Date</MudTh>
-                            <MudTh>Time</MudTh>
-                        </HeaderContent>
+                    <MudGrid Gutter="true" Class="mb-3">
+                        <MudItem md="6">
+                            <MudText Typo="Typo.h5" Class="mb-2">Search History</MudText>
+                        </MudItem>
+                        <MudItem md="6" Style="display:flex;flex-direction:row;justify-content:end">
+                            <MudButton @onclick="delete" Variant="Variant.Filled" Class="btn-1">clear history</MudButton>
+                        </MudItem>
+                    </MudGrid>
 
-                        <RowTemplate>
-                            <MudTd DataLabel="City">@context.City</MudTd>
-                            <MudTd DataLabel="Temperature">@context.Temp</MudTd>
-                            <MudTd DataLabel="Humidity">@context.Hum</MudTd>
-                            <MudTd DataLabel="Wind Speed">@context.Windspeed</MudTd>
-                            <MudTd DataLabel="Condition">@context.Condition</MudTd>
-                            <MudTd DataLabel="Date">@context.Created_at.ToString("dd-MM-yyyy")</MudTd>
-                            <MudTd DataLabel="Time">@context.Created_at.ToString("hh:mm tt")</MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                </div>
-            </MudPaper>
-        </MudContainer>
+                    <div style="overflow-x:auto;">
+                        <MudTable Items="@history" Dense="true" Hover="true" Elevation="0" HideToolBar="true">
+                            <HeaderContent>
+                                <MudTh>City</MudTh>
+                                <MudTh>Temperature (°C)</MudTh>
+                                <MudTh>Humidity (%)</MudTh>
+                                <MudTh>Wind Speed (km/h)</MudTh>
+                                <MudTh>Condition</MudTh>
+                                <MudTh>Date</MudTh>
+                                <MudTh>Time</MudTh>
+                            </HeaderContent>
+
+                            <RowTemplate>
+                                <MudTd DataLabel="City">@context.City</MudTd>
+                                <MudTd DataLabel="Temperature">@context.Temp</MudTd>
+                                <MudTd DataLabel="Humidity">@context.Hum</MudTd>
+                                <MudTd DataLabel="Wind Speed">@context.Windspeed</MudTd>
+                                <MudTd DataLabel="Condition">@context.Condition</MudTd>
+                                <MudTd DataLabel="Date">@context.Created_at.ToString("dd-MM-yyyy")</MudTd>
+                                <MudTd DataLabel="Time">@context.Created_at.ToString("hh:mm tt")</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </div>
+                </MudPaper>
+            </MudContainer>
+        }
+
+        else
+        {
+            <MudContainer Class="Container-1">
+                <MudPaper Class="paper-2">
+                    <MudText Typo="Typo.h4">No Search History Found</MudText>
+                </MudPaper>
+            </MudContainer>
+        }
     }
-
     else
     {
         <MudContainer Class="Container-1">
@@ -56,17 +71,22 @@
                 <MudText Typo="Typo.h4">No Search History Found</MudText>
             </MudPaper>
         </MudContainer>
-        }}
+    }
+
+}
 else
 {
     <MudContainer Class="container-0 object-center">
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudProgressCircular Indeterminate="true" Style="color:#1A4A4D;
+            " Size="Size.Large" />
     </MudContainer>
 }
+
 
 @code{
     private List<Historydetails> history = new();
     private bool Found ;
+    private bool data_condition = false;
     protected override async Task OnInitializedAsync()
     {
         await GetHistory();
@@ -83,7 +103,7 @@ else
         {
             Found = true;
         }
-
+        data_condition = true;
     }
     private async Task delete()
     {

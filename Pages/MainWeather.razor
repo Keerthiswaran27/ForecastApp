@@ -1,4 +1,6 @@
 ﻿    @page "/weather"
+    @using Microsoft.AspNetCore.Authorization
+    @attribute [Authorize]
     @using MudBlazor
     @layout DashboardLayout
     @using MFModel.Models
@@ -14,6 +16,7 @@
     @inject WeatherService WSService
     @using HService.Services
     @inject HistoryService HService
+
 
 
  @if(forecast != null && forecast.Count>0)   
@@ -51,20 +54,28 @@
                 <MudItem md="12" Class="middle-grid">
                     <MudPaper Class="mgc-1" Elevation="3">
                         <MudGrid Gutter="true">
-                            <MudItem xs="12" sm="3">
-                                <MudText Typo="Typo.h5" Align="Align.Center">🌡@forecast[0].FeelsLike°</MudText>
+                            <MudItem xs="12" sm="3" md="3">
+                                <MudContainer Class="mt-2">
+                                    <MudText Typo="Typo.h5" Align="Align.Center">🌡@forecast[0].FeelsLike°</MudText>
+                                </MudContainer>
                             </MudItem>
-                            <MudItem xs="12" sm="4">
-                                <MudText Typo="Typo.h5" Align="Align.Center">@forecast[0].Main.ToUpper()</MudText>
+                            <MudItem xs="12" sm="4" md="4">
+                                <MudContainer Class="mt-2">
+                                    <MudText Typo="Typo.h5" Align="Align.Center">@forecast[0].Main.ToUpper()</MudText>
+                                </MudContainer>
                             </MudItem>
-                            <MudItem xs="12" sm="3">
-                                <MudText Typo="Typo.h5" Align="Align.Center">💧@forecast[0].Humidity%</MudText>
+                            <MudItem xs="12" sm="3" md="3" >
+                                <MudContainer Class="mt-2">
+                                    <MudText Typo="Typo.h5" Align="Align.Center">💧@forecast[0].Humidity%</MudText>
+                                </MudContainer>
                             </MudItem>
-                            <MudItem xs="12" sm="2" >
-                                <MudCheckBox T="bool" @bind-Value="isChecked" @onclick="() => ToggleFavourite(forecast[0].CityName, isChecked)"
-                            CheckedIcon="@Icons.Material.Filled.Favorite" UncheckedIcon="@Icons.Material.Filled.FavoriteBorder"
-                            Color="Color.Error">
-                        </MudCheckBox>
+                            <MudItem xs="12" sm="2"md="2">
+                                <MudContainer >
+                                    <MudCheckBox T="bool" @bind-Value="isChecked" @onclick="() => ToggleFavourite(forecast[0].CityName, isChecked)"
+                                                 CheckedIcon="@Icons.Material.Filled.Favorite" UncheckedIcon="@Icons.Material.Filled.FavoriteBorder"
+                                                 Color="Color.Error">
+                                    </MudCheckBox>
+                                </MudContainer>  
                             </MudItem>
                         </MudGrid>
                     </MudPaper>
@@ -145,7 +156,7 @@
 else
 {
     <MudContainer Class="container-1 object-center">
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudProgressCircular Indeterminate="true" Style="color:#1A4A4D;" Size=" Size.Large" />
     </MudContainer>
 }
 
@@ -178,7 +189,6 @@ else
         var allData = await HSService.GetHourlyForecastAsync(forecast[0].Lat, forecast[0].Lon);
         var now = DateTime.Now;
         HourlyList = allData.Where(h => h.Time >= now).Take(12).ToList();
-        Console.WriteLine(HourlyList[1].WeatherCode);
     }
 
     private async Task getweather()
@@ -194,7 +204,7 @@ else
             }
             else
             {
-                Console.WriteLine("history not inserted");
+                Console.WriteLine("history not inserted");  
             }
             if (forecast != null)
                 {
@@ -242,7 +252,7 @@ else
             "Clear" => "Images/contrast.png",
             "Clouds" => "Images/cloudy.png",
             "Rain" => "Images/thunder.png",
-            "Drizzle" => "Images/drizzle.png",
+            "Drizzle" => "Images/thunder.png",
             "Thunderstorm" => "Images/thunder.png",
             "Snow" => "Images/snow.png",
             "Mist" => "Images/mist.png",
@@ -267,7 +277,7 @@ else
             63 => "Images/thunder.png",
             81 => "Images/thunder.png",
             95 => "Images/thunder.png",
-            _ => "N/A"
+        _ => "Images/thunder.png"
         };
     }
     <style>

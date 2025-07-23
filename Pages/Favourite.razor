@@ -1,5 +1,7 @@
 ﻿@page "/favourites"
 @layout DashboardLayout
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using UDService.Services
 @inject Userdata UDService
 @using WSService.Services
@@ -12,54 +14,64 @@
 
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    @if (weatherfav != null && weatherfav.Count > 0)
+    @if(data_condition)
     {
-        <div style="text-align: center; margin-top: 1rem; margin-bottom: 1.5rem;">
-            <MudText Typo="Typo.h4" Class="font-bold" Style="color: #1A4A4D;      ">
-                Your Favourite Cities
-            </MudText>
-            <MudText Typo="Typo.subtitle2" Class="text-muted">
-                Stay updated with the latest forecasts for the places you care about.
-            </MudText>
-        </div>
-        @foreach (var cityForecast in weatherfav)
+        @if (weatherfav != null && weatherfav.Count > 0)
         {
-            var cityName = cityForecast.forecast[0].CityName;
+            <div style="text-align: center; margin-top: 1rem; margin-bottom: 1.5rem;">
+                <MudText Typo="Typo.h4" Class="font-bold" Style="color: #1A4A4D;      ">
+                    Your Favourite Cities
+                </MudText>
+                <MudText Typo="Typo.subtitle2" Class="text-muted">
+                    Stay updated with the latest forecasts for the places you care about.
+                </MudText>
+            </div>
+            @foreach (var cityForecast in weatherfav)
+            {
+                var cityName = cityForecast.forecast[0].CityName;
 
-            <MudPaper Class="mb-6 p-4" Style="border-radius: 16px; background:rgba(255,255,255,0.4);">
-                <div class="d-flex justify-between align-center mb-2">
-                    <MudText Typo="Typo.h5">🌆 @cityName</MudText>
-                    <MudSpacer/>
-                    <MudCheckBox T="bool" @bind-Value="cityForecast.IsFavourite" @onclick="() => ToggleFavourite(cityForecast.forecast[0].CityName, cityForecast.IsFavourite)"
-                            CheckedIcon="@Icons.Material.Filled.Favorite" UncheckedIcon="@Icons.Material.Filled.FavoriteBorder"
-                            Color="Color.Error"/>
+                <MudPaper Class="mb-6 p-4" Style="border-radius: 16px; background:rgba(255,255,255,0.4);">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <MudText Typo="Typo.h5">🌆 @cityName</MudText>
+                        <MudSpacer />
+                        <MudCheckBox T="bool" @bind-Value="cityForecast.IsFavourite" @onclick="() => ToggleFavourite(cityForecast.forecast[0].CityName, cityForecast.IsFavourite)"
+                                     CheckedIcon="@Icons.Material.Filled.Favorite" UncheckedIcon="@Icons.Material.Filled.FavoriteBorder"
+                                     Color="Color.Error" />
 
-                </div>
+                    </div>
 
-                <!-- Horizontal daily forecast scroll -->
-                <div class="horizontal-scroll-container">
-                    @foreach (var day in cityForecast.forecast)
-                    {
-                        <MudCard Class="weather-day-card mx-2">
-                            <MudCardContent>
-                                <MudText Typo="Typo.subtitle2">@day.Date.ToString("ddd")</MudText>
-                                <MudText Typo="Typo.h6">@day.Temp°C</MudText>
-                                <MudText Typo="Typo.body2">@day.Main</MudText>
-                                <MudText Typo="Typo.caption">Humidity: @day.Humidity%</MudText>
-                                <MudText Typo="Typo.caption">Wind: @day.WindSpeed km/h</MudText>
-                            </MudCardContent>
-                        </MudCard>
-                    }
-                </div>
-            </MudPaper>
+                    <!-- Horizontal daily forecast scroll -->
+                    <div class="horizontal-scroll-container">
+                        @foreach (var day in cityForecast.forecast)
+                        {
+                            <MudCard Class="weather-day-card mx-2">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.subtitle2">@day.Date.ToString("ddd")</MudText>
+                                    <MudText Typo="Typo.h6">@day.Temp°C</MudText>
+                                    <MudText Typo="Typo.body2">@day.Main</MudText>
+                                    <MudText Typo="Typo.caption">Humidity: @day.Humidity%</MudText>
+                                    <MudText Typo="Typo.caption">Wind: @day.WindSpeed km/h</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        }
+                    </div>
+                </MudPaper>
+            }
+
         }
-
+        else
+        {
+            <MudContainer Class="container-0 object-center">
+                <MudText Typo="Typo.h2">No Favourites Yet Added</MudText>
+            </MudContainer>
+        }
     }
     else
     {
         <MudContainer Class="container-0 object-center">
-            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            <MudProgressCircular Indeterminate="true" Style="color:#1A4A4D;" Size="Size.Large" />
         </MudContainer>
+        
     }
 </MudContainer>
 
@@ -70,6 +82,7 @@
     private List<FavWeather> weatherfav = new();
     private List<string> cities = new();
     private bool isChecked = true;
+    private bool data_condition = false;
     protected override async Task OnInitializedAsync()
     {
         await GetFavouriteCities();
@@ -84,6 +97,7 @@
             fav.forecast = await RSService.GetForecastAsync(city, 5);
             weatherfav.Add(fav);
         }
+        data_condition = true;
     }
     private async Task ToggleFavourite(string city, bool check)
     {

@@ -7,57 +7,68 @@
 
 <PageTitle>sign up</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex justify-center mt-12">
-    <MudPaper Elevation="10" Class="p-6 rounded-3">
+<MudContainer MaxWidth="MaxWidth.Medium" style="margin-top:70px">
+    <MudPaper Style="padding:30px;border-radius:22px;">
+        <MudGrid Gutter="true">
+            <MudItem xs="12" sm="7" md="6">
+                <MudContainer Style="padding-top:40px;">
+                    <MudImage Src="Images/signup.jpg" Alt="signin" Width="420"></MudImage>
+                </MudContainer>
+            </MudItem>
+            <MudItem xs="12" sm="5" md="6">
+                <MudContainer>
 
-        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">Create Account</MudText>
+                    <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">Create Account</MudText>
 
-        <MudTextField Label="Name"
-                      @bind-Value="name"
-                      Variant="Variant.Outlined"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Person"
-                      Class="mb-3"
-                      Required="true" />
+                    <MudTextField Label="Name"
+                                  @bind-Value="name"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person"
+                                  Class="mb-3"
+                                  Required="true" />
 
-        <MudTextField Label="Email"
-                      @bind-Value="email"
-                      Variant="Variant.Outlined"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Email"
-                      Class="mb-3"
-                      Required="true"
-                      Immediate="true"
-                      InputType="InputType.Email" />
+                    <MudTextField Label="Email"
+                                  @bind-Value="email"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email"
+                                  Class="mb-3"
+                                  Required="true"
+                                  Immediate="true"
+                                  InputType="InputType.Email" />
 
-        <MudTextField Label="Password"
-                      @bind-Value="password"
-                      Variant="Variant.Outlined"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Lock"
-                      Class="mb-4"
-                      InputType="InputType.Password"
-                      Required="true" />
-        <MudTextField Label="confirm password"
-                      @bind-Value="confirm_password"
-                      Variant="Variant.Outlined"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Lock"
-                      Class="mb-4"
-                      InputType="InputType.Password"
-                      Required="true" />
+                    <MudTextField Label="Password"
+                                  @bind-Value="password"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Lock"
+                                  Class="mb-4"
+                                  InputType="InputType.Password"
+                                  Required="true" />
+                    <MudTextField Label="confirm password"
+                                  @bind-Value="confirm_password"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Lock"
+                                  Class="mb-4"
+                                  InputType="InputType.Password"
+                                  Required="true" />
 
-        <MudButton Variant="Variant.Filled"
-                   Class="bn"
-                   OnClick="SignUpAsync"
-                   FullWidth="true">
-            Sign Up
-        </MudButton>
+                    <MudButton Variant="Variant.Filled"
+                               Class="bn"
+                               OnClick="SignUpAsync"
+                               FullWidth="true">
+                        Sign Up
+                    </MudButton>
 
-        <MudText Color="Color.Error" Typo="Typo.subtitle2" Class="mt-3">
-            @message
-        </MudText>
+                    <MudText Color="Color.Error" Typo="Typo.subtitle2" Class="mt-3">
+                        @message
+                    </MudText>
 
+                </MudContainer>
+            </MudItem>
+        </MudGrid>
     </MudPaper>
 </MudContainer>
 
@@ -114,27 +125,26 @@
         padding:0;
     }
     /* Centering the Container */
-    .mud-container {
+    /* .mud-container {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 85vh;
-    }
+    } */
 
     /* Form Box (Paper) */
-    .mud-paper {
+    /* .mud-paper {
         background-color: #ffffff;
         border-radius: 20px !important;
         box-shadow: 0 8px 16px rgba(33, 150, 243, 0.25);
         padding: 2.5rem;
-        max-width: 420px;
         width: 100%;
         transition: transform 0.2s ease;
     }
 
         .mud-paper:hover {
             transform: scale(1.01);
-        }
+        } */
 
     /* Input Fields - Let MudBlazor handle them naturally */
     .mud-input, .mud-input-control {
