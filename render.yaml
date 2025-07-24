@@ -1,7 +1,8 @@
 services:
   - type: web
     name: forecastapp
-    staticPublishPath: dist/wwwroot
+    buildCommand: dotnet publish -c Release -o out
+    staticPublishPath: out/wwwroot
     routes:
       - type: rewrite
         source: /.*
