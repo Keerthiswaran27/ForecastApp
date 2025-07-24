@@ -116,6 +116,7 @@
     private async Task LogoutAsync()
     {
         await logout.SignOutAsync();
+        NavManager.NavigateTo("/login");
     }
 }
 <style>
